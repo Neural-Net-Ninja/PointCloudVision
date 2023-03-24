@@ -5,7 +5,8 @@ model = resnet18(weights=ResNet18_Weights.DEFAULT)
 dataset = torch.rand(1, 3, 64, 64)
 labels = torch.rand(1, 1000)
 
-#print(f'Model before learning:______:', model)
+print(f'Model before learning:______:', model)
+print(f'is model trained:______:', model.training)
 for key, value in model.named_parameters():
     print(f'model parameters key:______:\n {key} \n')
     print(f'model parameters value:______:\n {value} \n')
@@ -29,7 +30,7 @@ for epoch in range(3):
 
 print(model)
 
-#print(f'Model after learning:**************:', model)
+print(f'Model after learning:**************:', model)
 for key, value in model.named_parameters():
     print(f'model parameters key:*********:\n {key} \n')
     print(f'model parameters value:*********:\n {value} \n')
