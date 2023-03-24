@@ -5,14 +5,13 @@ model = resnet18(weights=ResNet18_Weights.DEFAULT)
 dataset = torch.rand(1, 3, 64, 64)
 labels = torch.rand(1, 1000)
 
-print(f'Model before learning:______:', model)
-print(f'is model trained:______:', model.training)
-for key, value in model.named_parameters():
-    print(f'model parameters key:______:\n {key} \n')
-    print(f'model parameters value:______:\n {value} \n')
+# print(f'Model before learning:______:', model)
+# for key, value in model.named_parameters():
+#     print(f'model parameters key:______:\n {key} \n')
+#     print(f'model parameters value:______:\n {value} \n')
 
 
-
+model.train()
 for epoch in range(3):
 
     # forward pass
