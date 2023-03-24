@@ -1,0 +1,15 @@
+pcnn - matrix design !
+
+Material.theme: Material.Dark
+Material.accent: "yellow"
+Material.primary: "Lime"
+Material.background: "black"
+Material.foreground: "lime"
+
+
+check pytorch version 
+python -c "import torch; print(torch.__version__)"
+
+pip list
+
+nvcc -V

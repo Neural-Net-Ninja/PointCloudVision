@@ -1,0 +1,11 @@
+class net ()
+
+	forward propagation 
+
+	calculation of loss
+
+	backward propagation
+
+defining  the forward fucntion first and backward fucntion is automatically defined using backprop
+
+any of the tensor operations can be used in forward pass
