@@ -9,7 +9,7 @@ def ramanujan_magic_square(a, b, c, d):
     magic_square[0][3] = d
     
     # calculate the remaining elements using Ramanujan's algorithm
-    magic_constant = 139
+    magic_constant = a + b + c + d
     magic_square[1][0] = int(magic_constant - (a + d))
     magic_square[2][0] = int(magic_constant - (b + c))
     magic_square[3][0] = int(magic_constant - (magic_square[1][0] + magic_square[2][0]))

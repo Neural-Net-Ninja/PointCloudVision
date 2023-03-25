@@ -1,15 +1,12 @@
-dict_a = {'apple': 1, 'banana': 2, 'cherry': 3}
-dict_b = {'apple_pie': 4, 'banana_split': 5, 'mango_sorbet': 7}
+# create a list of 100 numbers
+numbers = [x for x in range(1, 101)]
 
-not_matched = []
-for key_b in dict_b.keys():
-    matched = False
-    for key_a in dict_a.keys():
-        if key_b.startswith(key_a):
-            matched = True
-            break
-    if not matched:
-        not_matched.append(key_a)
+def check_all_numbers_are_even(numbers):
+    # check if all numbers in the list are even
+    for number in numbers:
+        if number % 2 != 0:
+            return False
+    return True
 
-print(not_matched)  # ['mango_sorbet']
+# check if all nu
 
