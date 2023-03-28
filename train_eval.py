@@ -45,3 +45,8 @@ with torch.no_grad():
         correct += (predicted == labels).sum().item()
 
 print('Accuracy: {:.2f}%'.format(100 * correct / total))
+
+# save the model
+torch.save(model.state_dict(), 'model.ckpt')
+
+# working with the saved model and inserting in the the new function.
