@@ -13,3 +13,5 @@ python -c "import torch; print(torch.__version__)"
 pip list
 
 nvcc -V
+
+pip uninstall torch torchaudio torchvision torch-cluster torch-geometric torch-scatter torch-sparse torch-spline-conv             
