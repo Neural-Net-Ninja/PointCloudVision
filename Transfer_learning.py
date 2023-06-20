@@ -53,7 +53,6 @@ for name, child in model.named_parameters():
     print('name::::', name, '\n'
           'child::::', child)
 
-
 #     # unfreeze the selected layers for fine-tuning
 #     for param in child.parameters():
 #         print('param.requires_grad :', param.requires_grad)

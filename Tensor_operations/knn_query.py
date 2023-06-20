@@ -1,4 +1,5 @@
 import torch
+from typing import Tuple
 #import pointops
 
 # pointops knn_query takes in (neighbours, coord, offset)
@@ -16,8 +17,7 @@ indices = torch.tensor([[  0,  10,  20,  30,  40,  50,  60,  70],
 
 print("indices:__", "\n", indices.shape)
 
-
-def KNNQueryNaive(ctx, nsample: int, xyz: torch.Tensor, new_xyz: torch.Tensor = None) -> Tuple[torch.Tensor]:
+def KNNQueryNaive(nsample: int, xyz: torch.Tensor, new_xyz: torch.Tensor = None) -> Tuple[torch.Tensor]:
     """
     KNN Indexing
     input: nsample: int32, Number of neighbor
@@ -50,6 +50,12 @@ def KNNQueryNaive(ctx, nsample: int, xyz: torch.Tensor, new_xyz: torch.Tensor = 
     idx = idxs[:, :, 0:nsample].int()
     
     return idx
+
+
+xyz = torch.tensor([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3],
+                    [6, 6, 6], [7, 7, 7], [8, 8, 8], [11, 11, 11]])
+output = KNNQueryNaive(8, xyz)
+print("output:__", "\n", output, "\n", output.shape)
 
 
 
