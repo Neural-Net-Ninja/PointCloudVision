@@ -10,6 +10,26 @@ defining  the forward fucntion first and backward fucntion is automatically defi
 
 any of the tensor operations can be used in forward pass
 
+
+
+Point-wise Mutual Information (PMI) loss: This loss function is based on the mutual information between the predicted
+ segmentation and the input point cloud. It encourages the predicted segmentation to be consistent with the input point
+  cloud by penalizing the mutual information between the predicted segmentation and the input point cloud.
+
+Focal loss: This loss function is designed to address class imbalance in the training data by assigning higher weights
+ to misclassified examples. It is commonly used as a loss function for point cloud semantic segmentation tasks.
+
+Dice loss: This loss function is based on the Dice coefficient, which measures the overlap between the predicted
+ segmentation and the ground truth segmentation. It is commonly used as a loss function for binary segmentation
+  tasks, but can be adapted for multi-class segmentation tasks.
+
+Boundary loss: This loss function encourages the predicted segmentation to have sharp and accurate boundaries by
+ penalizing the distance between the predicted segmentation and the ground truth segmentation along the boundary.
+
+Lovasz-Softmax loss: This loss function is based on the Lovasz extension of the submodular set function, which measures
+ the difference between the predicted segmentation and the ground truth segmentation in terms of the order of the
+  predicted labels. It is commonly used as a loss function for multi-class segmentation tasks.
+
 Chamfer distance: This loss function measures the distance between two point clouds by computing the minimum distance
  between each point in one cloud and its nearest neighbor in the other cloud. It is commonly used as a loss function
   for point cloud registration and reconstruction tasks.
