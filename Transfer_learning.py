@@ -37,6 +37,17 @@ for k, v in state_dict.items():
 #print('new_state_dict.keys()', new_state_dict.keys())
 # load params
 model.load_state_dict(new_state_dict)
+# Gestern habe ich den point Transformer weiter aus reviews aktualisiert, und das Modell trained on road sign, mit früheren Daten getestet
+
+# aber als ich versuchte,   es mit neuen Daten zu testen,     während Preprocessing ist mein Computer wieder crashed.
+
+# Ich werde es    noch einmal versuchen,    diesmal nur mit der CPU   ja and see if it works.
+
+# Ich habe auch einige review comments von Adrian für poissons disk sampling,
+# Ich werde versuchen, das Sampling basierend auf seinen Vorschlägen zu aktualisieren
+
+
+
 
 # specific_naemd = model.named_children(['fc_end'])
 # print('specific_child::::::', specific_naemd)

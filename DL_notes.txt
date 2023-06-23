@@ -9,3 +9,18 @@ class net ()
 defining  the forward fucntion first and backward fucntion is automatically defined using backprop
 
 any of the tensor operations can be used in forward pass
+
+Chamfer distance: This loss function measures the distance between two point clouds by computing the minimum distance
+ between each point in one cloud and its nearest neighbor in the other cloud. It is commonly used as a loss function
+  for point cloud registration and reconstruction tasks.
+
+Earth Mover's Distance (EMD): This loss function is similar to the Chamfer distance, but instead of computing the
+ minimum distance between each point and its nearest neighbor, it computes the minimum cost of transforming one point 
+ cloud into the other by moving each point a certain distance. It is commonly used as a loss function for point cloud
+  generation tasks.
+
+Repulsion loss: This loss function encourages the points in a point cloud to be evenly distributed by penalizing the
+ distance between nearby points. It is commonly used as a regularization term in conjunction with other loss functions.
+
+F-score loss: This loss function is based on the F-score metric, which measures the harmonic mean of precision and
+ recall. It is commonly used as a loss function for point cloud segmentation tasks.
