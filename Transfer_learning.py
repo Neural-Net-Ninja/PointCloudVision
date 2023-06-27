@@ -37,34 +37,17 @@ for k, v in state_dict.items():
 #print('new_state_dict.keys()', new_state_dict.keys())
 # load params
 model.load_state_dict(new_state_dict)
-# Am Freitag habe ich eine Funktion entwickelt, um Kandidaten aus einem aktiven Punkt selektieren (developed).
-# Poisson-disk sampling .
-for k, v in state_dict.items():
-    #print('key:', k)
-    layer_name = k.split(".")[0]
-    name = k[7:] if k.startswith('module.') else k # remove `module.`
-    #print('layer_name', name)
-    new_state_dict[name] = v
-# Diese Funktion berechnet (calculated) die Distanz jedes Punktes zum aktive point und eliminiert Points, 
-# die zu weit oder zu nah sind. 
+vocabulary 
 
-# Diese selected candidate werden in die Liste der selected sample aufgenommen (recorded),
-# und unter den selected candidate,,,, wird eine ramdom sample als nächster active point ausgewählt. 
-print([name for name, child in model.named_children()])
+Ich habe mit Justus gesprochen und wir haben unsere Ergebnisse dokumentiert, die wir als benchmark verwenden können.
 
-print('model parameter :', model.parameters())
+Justus gab mir auch eine idee von meiner class_weighted_sampling-Implementierung, also habe ich zwei neue MRs geöffnet
 
-# Diese loop wird so lange fortgesetzt (continued)........, bis der sample size erreicht ist (reached).
+with two new sampling methods, we will better approach to zooming in on the minority class.
 
-# i will check its corrcetness and request a review.
+i already implemented them, and over the time i will perfect them and add more.
 
-# Check if the last layer is empty
-last_layer = [child for name, child in self.named_children() if name==layers[-1]]
-self.assertFalse(last_layer)
-
-# Außerdem werde ich die prediction für die Essen Daten ausführen (carry out)
-
-# und es wird eine meeting mit Justus über die Trainings praktiken geben, um das Training uniform zu halten.
+und gestern habe ich das Transformator netzwerk weiter aktualisiert, und die MR für weighted loss teilweise reviewed.
 
 
 specific_naemd = model.named_children(['fc_end'])
