@@ -39,15 +39,11 @@ for k, v in state_dict.items():
 model.load_state_dict(new_state_dict)
 vocabulary 
 
-Ich habe mit Justus gesprochen und wir haben unsere Ergebnisse dokumentiert, die wir als benchmark verwenden können.
+Ich habe mit an der Fertig stellung des Transformors gearbeitet. Mit der Zeit wurde er zu komplex,
+also beschloss ich, mich nur noch darauf zu konzentrieren, bis er fertig war,
+da es immer schwieriger wurde, die Änderungen zu folgen.
 
-Justus gab mir auch eine idee von meiner class_weighted_sampling-Implementierung, also habe ich zwei neue MRs geöffnet
-
-with two new sampling methods, we will better approach to zooming in on the minority class.
-
-i already implemented them, and over the time i will perfect them and add more.
-
-und gestern habe ich das Transformator netzwerk weiter aktualisiert, und die MR für weighted loss teilweise reviewed.
+Und endlich haben wir es fast fertig, hoffentlich wird es heute merged.
 
 
 specific_naemd = model.named_children(['fc_end'])
