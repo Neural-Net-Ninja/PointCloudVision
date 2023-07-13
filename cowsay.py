@@ -1,41 +1,42 @@
 import numpy as np
 from sklearn.cluster import KMeans
 
-def attribute_weighted_sampling(indices: np.ndarray,
-                                num_points: int,
-                                attributes: np.ndarray,
-                                num_clusters: int = 3) -> np.ndarray:
-    """
-    Samples points based on weights of the attributes. Attributes value of minority class will have higher weights than
-    attributes value of majority class, thus increasing the probability of sampling points with minority
-    class attributes value.
+import matplotlib.pyplot as plt
 
-    :param indices: The indices of the points in the given neighborhood. Must have shape :math:`(N)` where `N = number of points`.
-    :type indices: numpy.ndarray
-    :param num_points: Number of points to be sampled from the neighborhood.
-    :type num_points: integer
-    :param attributes: The chosen attributes of the points in the dataset to consider for sampling. Must have shape :math:`(N)` where `N = number of points`.
-    :type attributes: numpy.ndarray
-    :param num_clusters: Number of clusters to be used for K-means clustering. Defaults to `3`.
-    :type num_clusters: integer
-    :return: The indices of the selected points.
-    :rtype: numpy.ndarray
-    """
-    # Perform K-means clustering on the attributes
-    kmeans = KMeans(n_clusters=num_clusters, random_state=0)
-    kmeans.fit(attributes.reshape(-1, 1))
+def min_max_scale(data):
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
 
-    # Assign weights to the attributes based on the cluster centers
-    weights = np.zeros_like(attributes, dtype=np.float32)
-    for i in range(num_clusters):
-        cluster_indices = np.where(kmeans.labels_ == i)[0]
-        cluster_center = kmeans.cluster_centers_[i]
-        weights[cluster_indices] = 1 / np.abs(attributes[cluster_indices] - cluster_center)
+def prominent_attribute_decider(intensity: np.ndarray = None,
+                                normal: np.ndarray = None,
+                                curvature: np.ndarray = None,
+                                distance_to_dtm: np.ndarray = None):
+    # Create a list of tuples containing the attribute name and data
+    attributes = [('intensity', min_max_scale(intensity)),
+                  ('normal', min_max_scale(normal)),
+                  ('curvature', min_max_scale(curvature)),
+                  ('distance_to_dtm', min_max_scale(distance_to_dtm))]
 
-    # Normalize the weights
-    weights = weights / np.sum(weights)
+    # Compute the mean for each attribute
+    means = []
+    for name, data in attributes:
+        if data is not None:
+            mean = np.mean(data)
+            means.append((name, mean))
+    
+    print(attributes)
+    print(means)
 
-    # Sample indices with replacement according to the weights
-    sampled_indices = np.random.choice(indices, size=num_points, replace=True, p=weights)
+    # Find the attribute with the highest mean
+    if len(means) > 0:
+        name, mean = max(means, key=lambda x: x[1])
+        return globals()[name]
+    else:
+        return None
 
-    return sampled_indices
+intensity = np.array([1, 1, 1, 1, 2, 1, 1, 1, 1])
+normal = np.array([1, 1, 1, 1, 2, 1, 1, 3, 1])
+curvature = np.array([1, 1, 1, 1, 2, 1, 1, 1, 4])
+distance_to_dtm = np.array([10, 12, 5, 3, 6, 1, 2, 1, 30])
+
+selected = prominent_attribute_decider(intensity, normal, curvature, distance_to_dtm)
+print(selected)

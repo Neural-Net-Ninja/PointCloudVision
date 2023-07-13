@@ -39,11 +39,17 @@ for k, v in state_dict.items():
 model.load_state_dict(new_state_dict)
 vocabulary 
 
-Ich habe mit an der Fertig stellung des Transformors gearbeitet. Mit der Zeit wurde er zu komplex,
-also beschloss ich, mich nur noch darauf zu konzentrieren, bis er fertig war,
-da es immer schwieriger wurde, die Änderungen zu folgen.
 
-Und endlich haben wir es fast fertig, hoffentlich wird es heute merged.
+Ich habe den prominent_attribute_decider implementiert,
+dafür habe ich zu erst versucht, die Histogramm-Methode zu verwenden, aber in einigen cases funktioniert es nicht
+
+Die pulse_data_distribution-Methode ist dagegen besser. Bei dieser Methode wird die positive area über der Median line berechnet,
+oder wir können einfach den mean verwenden. und das Attribut mit der größten positiven arrea wird für das Training ausgewählt.
+
+
+
+apart from that, werde ich die review für WL heute abschließen und so schnell wie möglich weitere progress mit AWS machen,
+da ich es für das Essen-Projekt brauche.
 
 
 specific_naemd = model.named_children(['fc_end'])
