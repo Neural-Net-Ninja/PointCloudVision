@@ -14,6 +14,8 @@ pip list
 
 nvcc -V
 
+python -m torch.utils.collect_env
+
 pip uninstall torch torchaudio torchvision torch-cluster torch-geometric torch-scatter torch-sparse torch-spline-conv 
 
-python execute_pipeline.py --steps train -p K:/Ergebnisse/Training/road_marking_train/100.json
+python execute_pipeline.py --steps preprocess train -p K:/Ergebnisse/Training/lantern_poles/100_Master.json
