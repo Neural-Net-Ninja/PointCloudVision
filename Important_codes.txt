@@ -6,6 +6,12 @@ Material.primary: "Lime"
 Material.background: "black"
 Material.foreground: "lime"
 
+create env :
+python -m venv C:\Machine_learning\environment\pcnn
+
+Activate env :
+C:\Machine_learning\environment\pcnn\Scripts\activate.bat
+
 
 check pytorch version 
 python -c "import torch; print(torch.__version__)"

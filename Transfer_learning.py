@@ -51,6 +51,40 @@ oder wir können einfach den mean verwenden. und das Attribut mit der größten 
 apart from that, werde ich die review für WL heute abschließen und so schnell wie möglich weitere progress mit AWS machen,
 da ich es für das Essen-Projekt brauche.
 
+########################################################################################################################
+
+Ich arbeite am Progress des Essen-Projekts, 
+damit wir den bisherigen progress zeigen können.vor dem intergeo
+
+Dazu verschiebe ich die Labels manuell von den alten Daten zu den neuen Daten.
+
+Ich werde auch den Text fertigstellen und informative Bilder für das Mobile Mapping Poster für die Intergeo auswählen.
+
+########################################################################################################################
+
+am fritag habe ich mit dem Training für die power_grid-Daten begonnen. Wir werden noch vor heute Abend neue prediction sehen können. 
+
+Ich habe den Text für die Poster noch nicht fertig geschrieben. Ich werde ihn bald fertigstellen.
+
+Und dann werde ich mit der processing der twin4road-Daten weitermachen.
+
+########################################################################################################################
+
+Ich habe gestern mit einem neuen Training begonnen, aber ich denke,
+
+dass ich das Attribut Dtm_to_distance anpassen muss, da es viele slopes in den Daten gibt. 
+
+Ich werde es heute konfigurieren und dietmar fragen, ob es in Ordnung ist, 
+und dann ein weiteres Training starten.
+
+Ich habe den Poster text und die Bilder hochgeladen, wir können es überprüfen und weitere Änderungen vornehmen, wenn wir wollen.
+
+Heute werde ich auch mit der Normalisierung der Intensität experimentieren und vershiedene grid sizes ausprobieren. 
+um die Ergebnisse zu verbessern.
+
+
+
+
 
 specific_naemd = model.named_children(['fc_end'])
 print('specific_child::::::', specific_naemd)
