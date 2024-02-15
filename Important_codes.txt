@@ -14,6 +14,7 @@ python -m venv C:\Machine_learning\Environments\pcnn
 
 Activate env :
 C:\Machine_learning\Environments\pcnn\Scripts\activate.bat
+C:\Machine_learning\Environments\Master_pcnn\Scripts\activate.bat
 
 
 check pytorch version 
@@ -25,6 +26,6 @@ nvcc -V
 
 python -m torch.utils.collect_env
 
-pip uninstall torch torchaudio torchvision torch-cluster torch-geometric torch-scatter torch-sparse torch-spline-conv 
+pip uninstall torch torchaudio torchvision torch-cluster torch-geometric torch-scatter torch-sparse torch-spline-conv
 
 python scripts/execute_pipeline.py --steps preprocess train predict -p Q:\Power_grid\AI_int_DTM\power_grid.json
