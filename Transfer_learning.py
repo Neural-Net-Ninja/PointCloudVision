@@ -49,6 +49,15 @@ print('model parameter :', model.parameters())
 
 #print('model Name******** :', [model.__class__.__name__] )
 
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+
+
+
+
+
+
 for name, child in model.named_parameters():
     print('name::::', name, '\n'
           'child::::', child)
