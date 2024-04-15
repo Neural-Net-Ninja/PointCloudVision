@@ -88,3 +88,79 @@ for name, child in model.named_parameters():
 # frozen_layer = all([param.requires_grad for name, child in self.named_children() if name not in unfreeze_layers
 #                     for param in child.parameters()])
 # self.assertFalse(frozen_layer)
+
+import torch
+from torchvision import models
+
+# Load pre-trained model
+pretrained_model = models.resnet50(pretrained=True)
+
+# Freeze model parameters
+for param in pretrained_model.parameters():
+    param.requires_grad = False
+    
+num_features = pretrained_model.fc.in_features
+pretrained_model.fc = torch.nn.Linear(num_features, num_classes)  # num_classes is the number of classes in new task
+
+# Define loss function and optimizer
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(pretrained_model.fc.parameters(), lr=0.001, momentum=0.9)
+
+# Train the model
+for epoch in range(num_epochs):
+    for inputs, labels in dataloader:  # dataloader for new task
+        optimizer.zero_grad()
+        outputs = pretrained_model(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        
+# Unfreeze all model parameters
+for param in pretrained_model.parameters():
+    param.requires_grad = True
+
+# Train the model with a lower learning rate
+optimizer = torch.optim.SGD(pretrained_model.parameters(), lr=0.0001, momentum=0.9)
+
+import torch
+from torchvision import models
+
+# Load pre-trained models
+pretrained_model1 = models.resnet50(pretrained=True)
+pretrained_model2 = models.vgg16(pretrained=True)
+
+# Freeze model parameters
+for param in pretrained_model1.parameters():
+    param.requires_grad = False
+
+for param in pretrained_model2.parameters():
+    param.requires_grad = False
+    
+class CombinedModel(torch.nn.Module):
+    def __init__(self, model1, model2, num_classes):
+        super().__init__()
+        self.model1 = model1
+        self.model2 = model2
+        self.classifier = torch.nn.Linear(512 * 2, num_classes)  # Adjust the input size
+
+    def forward(self, x):
+        x1 = self.model1(x)
+        x2 = self.model2(x)
+        x = torch.cat((x1, x2), dim=1)
+        x = self.classifier(x)
+        return x
+
+combined_model = CombinedModel(pretrained_model1, pretrained_model2, num_classes)
+
+# Define loss function and optimizer
+criterion = torch.nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(combined_model.parameters(), lr=0.001, momentum=0.9)
+
+# Train the model
+for epoch in range(num_epochs):
+    for inputs, labels in dataloader:  # dataloader for new task
+        optimizer.zero_grad()
+        outputs = combined_model(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
