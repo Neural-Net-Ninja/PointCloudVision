@@ -11,6 +11,21 @@ from .base_loss import SegmentationLoss
 class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as parameters from models.py
     """
     Lovasz loss for segmentation task.
+    
+    
+    The Lovász-Softmax loss, often used for semantic segmentation tasks, doesn't necessarily return zero for perfect 
+    predictions because it's designed to measure the distance between predicted and ground truth segmentation masks at the 
+    level of set intersections. Even if the prediction perfectly matches the ground truth, there can still be differences 
+    in the way individual pixels are segmented, leading to non-zero loss.
+
+    The Lovász-Softmax loss is based on the Lovász extension of submodular functions. It measures the difference in 
+    segmentation order between the predicted and ground truth masks. If the orderings perfectly match, the loss will 
+    indeed be zero. However, if there are differences in the orderings, even if the overall segmentation is correct, 
+    the loss will be non-zero.
+
+    This property of Lovász-Softmax loss allows it to be more robust than traditional pixel-wise losses like cross-entropy 
+    loss. It can handle cases where there might be uncertainties in the exact pixel-wise classification by focusing more on 
+    the global structure of the segmentation.
 
     :param class_seen: Class seen. Defaults to None.
     :type class_seen: Optional[int], optional
@@ -213,3 +228,5 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
             loss = point_weight * loss
 
         return self._reduce_loss(loss)
+
+
