@@ -84,3 +84,13 @@ def test_mean(self):
 
     # Check that the result is as expected
     self.assertEqual(result, np.mean(values))  # The result should be the mean of the values
+    
+def test_lovasz_grad(self):
+        # Call the _lovasz_grad method with the sample input
+        result = self._lovasz_grad(self.gt_sorted)
+
+        # Define the expected result manually or calculate it using other methods
+        expected_result = torch.tensor([0.4286, 0.1429, 0.4286, 0.1429, 0.2857, 0.2857, 0.])
+
+        # Check if the result matches the expected result
+        self.assertTrue(torch.allclose(result, expected_result))
