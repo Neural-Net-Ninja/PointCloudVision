@@ -34,6 +34,7 @@ outputs.
 
 __all__ = ['LovaszLoss']
 
+
 from typing import Optional, Literal
 from itertools import filterfalse
 
@@ -42,30 +43,15 @@ from torch import Tensor
 from .base_loss import SegmentationLoss
 
 
-class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as parameters from models.py
+class LovaszLoss(SegmentationLoss):
     """
     Lovasz loss for segmentation task.
-    
-    
-    The Lovász-Softmax loss, often used for semantic segmentation tasks, doesn't necessarily return zero for perfect 
-    predictions because it's designed to measure the distance between predicted and ground truth segmentation masks at the 
-    level of set intersections. Even if the prediction perfectly matches the ground truth, there can still be differences 
-    in the way individual pixels are segmented, leading to non-zero loss.
-
-    The Lovász-Softmax loss is based on the Lovász extension of submodular functions. It measures the difference in 
-    segmentation order between the predicted and ground truth masks. If the orderings perfectly match, the loss will 
-    indeed be zero. However, if there are differences in the orderings, even if the overall segmentation is correct, 
-    the loss will be non-zero.
-
-    This property of Lovász-Softmax loss allows it to be more robust than traditional pixel-wise losses like cross-entropy 
-    loss. It can handle cases where there might be uncertainties in the exact pixel-wise classification by focusing more on 
-    the global structure of the segmentation.
 
     :param class_seen: Class seen. Defaults to None.
     :type class_seen: Optional[int], optional
-    :param per_image: If True, loss computed per each image and then averaged, else computed per whole batch
+    :param per_point: If True, loss computed per each image and then averaged, else computed per whole batch
         Defaults to False.
-    :type per_image: bool, optional
+    :type per_point: bool, optional
     :param ignore_index: Label that indicates ignored pixels (does not contribute to loss). Defaults to None.
     :type ignore_index: Optional[int], optional
     :param point_weight: Point weight. Defaults to 1.0.
@@ -74,14 +60,14 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
     def __init__(self,
                  apply_softmax: bool = True,
                  class_seen: Optional[int] = None,
-                 per_image: bool = False,
+                 per_point: bool = False,
                  ignore_index: Optional[int] = None,
                  label_smoothing: float = 0.0,
                  reduction: Literal["mean", "sum", "none"] = "mean",
                  weight: Optional[torch.Tensor] = None):
         super().__init__(apply_softmax=apply_softmax, label_smoothing=label_smoothing, reduction=reduction)
         self.ignore_index = ignore_index
-        self.per_image = per_image
+        self.per_point = per_point
         self.class_seen = class_seen
         self.weight = weight
 
@@ -90,7 +76,7 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
                         labels: Tensor,
                         classes: str = "present",
                         class_seen: Optional[int] = None,
-                        per_image: bool = False,
+                        per_point: bool = False,
                         ignore: Optional[int] = None) -> Tensor:
         """
         Multi-class Lovasz-Softmax loss
@@ -105,12 +91,12 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
         :type classes: str, optional
         : param class_seen: Class seen. Defaults to None.
         :type class_seen: Optional[int], optional
-        :param per_image: Compute the loss per image instead of per batch. Defaults to False.
-        :type per_image: bool, optional
+        :param per_point: Compute the loss per image instead of per batch. Defaults to False.
+        :type per_point: bool, optional
         :param ignore: Void class labels. Defaults to None.
         :type ignore: Optional[int], optional
         """
-        if per_image:
+        if per_point:
             losses = []
             for prob, lab in zip(probas, labels):
                 flat_probas, flat_labels = self._flatten_probas(prob.unsqueeze(0), lab.unsqueeze(0), ignore)
@@ -139,7 +125,8 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
             return probas * 0.0
         C = probas.size(1)
         losses = []
-        for c in labels.unique():
+        class_to_sum = list(range(C)) if classes in ["all", "present"] else classes
+        for c in class_to_sum:
             if class_seen is None or c in class_seen:
                 fg = (labels == c).type_as(probas)  # foreground for class c
                 if classes == "present" and fg.sum() == 0:
@@ -149,7 +136,7 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
                         raise ValueError("Sigmoid output possible only with 1 class")
                     class_pred = probas[:, 0]
                 else:
-                    class_pred = probas[:, int(c)]
+                    class_pred = probas[:, c]
 
                 errors = (fg - class_pred).abs()
                 errors_sorted, perm = torch.sort(errors, 0, descending=True)
@@ -166,7 +153,7 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
 
         return self.mean(losses)
 
-    def _flatten_probas(self, probas, labels, ignore=None):
+    def _flatten_probas(self, probas, labels, ignore = Optional[int] = None):
         """
         Flattens predictions in the batch
 
@@ -200,6 +187,10 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
     def mean(self, values, ignore_nan=False, empty=0):
         """
         Nan-mean compatible with generators.
+        
+        :param values: An iterable of numbers or nan values
+        :type values: Iterable
+        :param ignore_nan: Ignore nan values in the computation
         """
         values = iter(values)
         if ignore_nan:
@@ -255,12 +246,13 @@ class LovaszLoss(SegmentationLoss):  # take in label smoothing and weight as par
             prediction,
             target,
             class_seen=self.class_seen,
-            per_image=self.per_image,
+            per_point=self.per_point,
             ignore=self.ignore_index)
 
         if point_weight is not None:
             loss = point_weight * loss
 
         return self._reduce_loss(loss)
+
 
 
