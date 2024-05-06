@@ -2,7 +2,7 @@ import os
 import glob
 
 # Specify the directory
-directory = 'Q:/50Hertz/Grossbeeren-Thyrow/prediction/webviz_spie'
+directory = 'Q:/50Hertz/Grossbeeren-Thyrow/ML_00/02_output'
 
 # Get a list of all files in the directory
 files = glob.glob(os.path.join(directory, '*_preprocessed*'))
