@@ -2,9 +2,9 @@ import os
 import shutil
 
 # Define your directories
-dir_A = 'Q:/50Hertz/Grossbeeren-Thyrow/prediction/webviz_spie'
+dir_A = 'Q:/50Hertz/Grossbeeren-Thyrow/ML_00/02_output'
 dir_B = 'Q:/50Hertz/Grossbeeren-Thyrow/Grossbeeren-Thyrow'
-dir_C = 'Q:/50Hertz/Grossbeeren-Thyrow/prediction/webviz_spie/raw_full density'
+dir_C = 'Q:/50Hertz/Grossbeeren-Thyrow/ML_00/Full_density_label'
 
 # Get list of file base names in directory A (without file extensions)
 files_in_A = [os.path.splitext(filename)[0] for filename in os.listdir(dir_A)]
