@@ -34,8 +34,7 @@ outputs.
 
 __all__ = ['LovaszLoss']
 
-
-from typing import Optional, Literal
+from typing import Optional, Literal, Iterable, Union, Tuple, List
 from itertools import filterfalse
 
 import torch
@@ -79,22 +78,29 @@ class LovaszLoss(SegmentationLoss):
                         per_point: bool = False,
                         ignore: Optional[int] = None) -> Tensor:
         """
-        Multi-class Lovasz-Softmax loss
+        Compute the multi-class Lovasz-Softmax loss.
 
-        :param probas: Class probabilities at each prediction (between 0 and 1). Interpreted as binary (sigmoid)
-            output with outputs of size [B, H, W].
+        This method computes the Lovasz-Softmax loss for multi-class classification tasks,
+        supporting both batch-wise and per-image loss computation.
+
+        :param probas: Class probabilities at each prediction (between 0 and 1).
+            Interpreted as binary (sigmoid) output with outputs of size [B, H, W].
         :type probas: torch.Tensor
-        :param labels: Ground truth labels (between 0 and C - 1)
+        :param labels: Ground truth labels (between 0 and C - 1), with a size matching the predictions.
         :type labels: torch.Tensor
-        :param classes: 'all' for all, 'present' for classes present in labels, or a list of classes
-            to average. Defaults to "present".
+        :param classes: Specifies which classes to consider for loss computation.
+            Can be 'all' for all classes, 'present' for classes present in labels, or a list of class
+            indices to average. Defaults to "present".
         :type classes: str, optional
-        : param class_seen: Class seen. Defaults to None.
+        :param class_seen: An optional integer representing a class index that has been observed.
+            If provided, only this class is considered for loss computation. Defaults to None.
         :type class_seen: Optional[int], optional
-        :param per_point: Compute the loss per image instead of per batch. Defaults to False.
+        :param per_point: If True, compute the loss per image instead of per batch. Defaults to False.
         :type per_point: bool, optional
-        :param ignore: Void class labels. Defaults to None.
+        :param ignore: Void class labels to be ignored in loss computation. Defaults to None.
         :type ignore: Optional[int], optional
+        :return: The computed Lovasz-Softmax loss.
+        :rtype: torch.Tensor
         """
         if per_point:
             losses = []
@@ -109,16 +115,32 @@ class LovaszLoss(SegmentationLoss):
 
         return loss
 
-    def _lovasz_softmax_flat(self, probas, labels, classes="present", class_seen=None):
+    def _lovasz_softmax_flat(self,
+                             probas: torch.Tensor,
+                             labels: torch.Tensor,
+                             classes: Union[str, List[int]] = "present",
+                             class_seen: Optional[List[int]] = None) -> torch.Tensor:
         """
-        Multi-class Lovasz-Softmax loss
+        Compute the multi-class Lovasz-Softmax loss.
 
-        :param probas: [P, C] Class probabilities at each prediction (between 0 and 1)
+        This method computes the Lovasz-Softmax loss for multi-class classification tasks.
+
+        :param probas: A torch.Tensor representing class probabilities at each prediction,
+            shaped as [P, C], where P is the number of predictions and C is the number of classes.
+            The probabilities should range between 0 and 1.
         :type probas: torch.Tensor
-        :param labels: [P] Tensor, ground truth labels (between 0 and C - 1)
+        :param labels: A torch.Tensor representing ground truth labels, shaped as [P],
+            where P is the number of predictions. Labels should range between 0 and C - 1,
+            where C is the number of classes.
         :type labels: torch.Tensor
-        :param classes: 'all' for all, 'present' for classes present in labels, or a list of classes to average.
-        :type classes: str, optional
+        :param classes: Specifies which classes to consider for loss computation. Can be 'all' for all classes,
+            'present' for classes present in labels, or a list of class indices to average. Defaults to 'present'.
+        :type classes: Union[str, List[int]], optional
+        :param class_seen: An optional list of class indices that have been observed.
+            If provided, only these classes are considered for loss computation. Defaults to None.
+        :type class_seen: Optional[List[int]]
+        :return: The computed Lovasz-Softmax loss.
+        :rtype: torch.Tensor
         """
         if probas.numel() == 0:
             # only void pixels, the gradients should be 0
@@ -153,16 +175,29 @@ class LovaszLoss(SegmentationLoss):
 
         return self.mean(losses)
 
-    def _flatten_probas(self, probas, labels, ignore = Optional[int] = None):
+    def _flatten_probas(self,
+                        probas: torch.Tensor,
+                        labels: torch.Tensor,
+                        ignore: Optional[int] = None) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Flattens predictions in the batch
+        Flatten predictions and ground truth labels in the batch.
 
-        :param probas: [B, C, H, W] or [B, H, W] Variable, class probabilities at each prediction (between 0 and 1)
+        This method reshapes the input tensors to facilitate computation in batch processing, particularly useful in
+        point cloud segmentation tasks.
+
+        :param probas: A torch.Tensor representing class probabilities at each prediction,
+            shaped as [B, C, H, W] or [B, H, W], where B is the batch size, C is the number of classes,
+            H is the height, and W is the width. The probabilities should range between 0 and 1.
         :type probas: torch.Tensor
-        :param labels: [B, H, W] Variable, ground truth labels (between 0 and C - 1)
+        :param labels: A torch.Tensor representing ground truth labels, shaped as [B, H, W], where B is the batch size,
+            H is the height, and W is the width. Labels should range between 0 and C - 1,
+            where C is the number of classes.
         :type labels: torch.Tensor
-        :param ignore: void class labels
-        :type ignore: Optional[int], optional
+        :param ignore: An optional integer representing void class labels to be ignored in computation.
+        :type ignore: Optional[int]
+        :return: A tuple containing flattened class probabilities and corresponding flattened ground truth labels after
+            excluding void class labels if specified.
+        :rtype: Tuple[torch.Tensor, torch.Tensor]
         """
         if probas.dim() == 3:
             # assumes output of a sigmoid layer
@@ -184,17 +219,28 @@ class LovaszLoss(SegmentationLoss):
     def isnan(self, x):
         return x != x
 
-    def mean(self, values, ignore_nan=False, empty=0):
+    def mean(self,
+             values: list[Tensor],
+             ignore_nan: bool = False,
+             empty: Union[int, str, float] = 0) -> torch.Tensor:
         """
-        Nan-mean compatible with generators.
-        
-        :param values: An iterable of numbers or nan values
+        Calculate the mean (average) of a sequence of numbers, supporting NaN values and generators.
+
+        This function computes the mean of a sequence of numeric values, optionally ignoring NaN (Not a Number)
+        values if specified. It is designed to handle both regular iterables and generator objects efficiently.
+
+        :param values: An iterable of numeric values, including potential NaN values.
         :type values: Iterable
-        :param ignore_nan: Ignore nan values in the computation
+        :param ignore_nan: If True, NaN values are excluded from the computation. Defaults to False.
+        :param empty: The value returned for an empty sequence. Can be a number (int or float) or "raise"
+            to raise a ValueError. Defaults to 0.
+        :return: The mean of the input sequence, or the specified empty value if the sequence is empty.
+        :rtype: Union[float, int]
+        :raises ValueError: If the sequence is empty and 'empty' is set to "raise".
         """
         values = iter(values)
         if ignore_nan:
-            values = filterfalse(self.isnan, values)
+            values = values = filterfalse(self.isnan, values)
         try:
             n = 1
             acc = next(values)
@@ -208,7 +254,8 @@ class LovaszLoss(SegmentationLoss):
             return acc
         return acc / n
 
-    def _lovasz_grad(self, gt_sorted):
+    def _lovasz_grad(self,
+                     gt_sorted: torch.Tensor) -> torch.Tensor:
         """
         Compute gradient of the Lovasz extension w.r.t sorted errors
 
@@ -253,6 +300,7 @@ class LovaszLoss(SegmentationLoss):
             loss = point_weight * loss
 
         return self._reduce_loss(loss)
+
 
 
 
