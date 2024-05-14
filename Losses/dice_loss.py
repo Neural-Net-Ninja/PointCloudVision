@@ -51,3 +51,26 @@ class DiceLoss(nn.Module):
                 total_loss += dice_loss
         loss = total_loss / num_classes
         return self.loss_weight * loss
+
+
+class TestDiceLoss(unittest.TestCase):
+    def setUp(self):
+        self.dice_loss = DiceLoss()
+
+    def test_forward(self):
+        # Create some dummy predictions and targets
+        pred = torch.randn(1, 3, 224, 224)  # Dummy predictions
+        target = torch.empty(1, 224, 224, dtype=torch.long).random_(3)  # Dummy targets
+
+        # Compute the loss
+        loss = self.dice_loss(pred, target)
+
+        # Check that the loss is a scalar tensor
+        self.assertIsInstance(loss, torch.Tensor)
+        self.assertEqual(loss.dim(), 0)
+
+        # Check that the loss is non-negative
+        self.assertGreaterEqual(loss.item(), 0)
+
+if __name__ == '__main__':
+    unittest.main()
