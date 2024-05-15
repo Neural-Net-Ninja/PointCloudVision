@@ -3,6 +3,87 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+@LOSSES.register_module()
+class CrossEntropyLoss(nn.Module):
+    def __init__(
+        self,
+        weight=None,
+        size_average=None,
+        reduce=None,
+        reduction="mean",
+        label_smoothing=0.0,
+        loss_weight=1.0,
+        ignore_index=-1,
+    ):
+        super(CrossEntropyLoss, self).__init__()
+        weight = torch.tensor(weight).cuda() if weight is not None else None
+        self.loss_weight = loss_weight
+        self.loss = nn.CrossEntropyLoss(
+            weight=weight,
+            size_average=size_average,
+            ignore_index=ignore_index,
+            reduce=reduce,
+            reduction=reduction,
+            label_smoothing=label_smoothing,
+        )
+
+    def forward(self, pred, target):
+        return self.loss(pred, target) * self.loss_weight
+
+
+@LOSSES.register_module()
+class SmoothCELoss(nn.Module):
+    def __init__(self, smoothing_ratio=0.1):
+        super(SmoothCELoss, self).__init__()
+        self.smoothing_ratio = smoothing_ratio
+
+    def forward(self, pred, target):
+        eps = self.smoothing_ratio
+        n_class = pred.size(1)
+        one_hot = torch.zeros_like(pred).scatter(1, target.view(-1, 1), 1)
+        one_hot = one_hot * (1 - eps) + (1 - one_hot) * eps / (n_class - 1)
+        log_prb = F.log_softmax(pred, dim=1)
+        loss = -(one_hot * log_prb).total(dim=1)
+        loss = loss[torch.isfinite(loss)].mean()
+        return loss
+
+
+@LOSSES.register_module()
+class BinaryFocalLoss(nn.Module):
+    def __init__(self, gamma=2.0, alpha=0.5, logits=True, reduce=True, loss_weight=1.0):
+        """Binary Focal Loss
+        <https://arxiv.org/abs/1708.02002>`
+        """
+        super(BinaryFocalLoss, self).__init__()
+        assert 0 < alpha < 1
+        self.gamma = gamma
+        self.alpha = alpha
+        self.logits = logits
+        self.reduce = reduce
+        self.loss_weight = loss_weight
+
+    def forward(self, pred, target, **kwargs):
+        """Forward function.
+        Args:
+            pred (torch.Tensor): The prediction with shape (N)
+            target (torch.Tensor): The ground truth. If containing class
+                indices, shape (N) where each value is 0≤targets[i]≤1, If containing class probabilities,
+                same shape as the input.
+        Returns:
+            torch.Tensor: The calculated loss
+        """
+        if self.logits:
+            bce = F.binary_cross_entropy_with_logits(pred, target, reduction="none")
+        else:
+            bce = F.binary_cross_entropy(pred, target, reduction="none")
+        pt = torch.exp(-bce)
+        alpha = self.alpha * target + (1 - self.alpha) * (1 - target)
+        focal_loss = alpha * (1 - pt) ** self.gamma * bce
+
+        if self.reduce:
+            focal_loss = torch.mean(focal_loss)
+        return focal_loss * self.loss_weight
+
 class DiceLoss(nn.Module):
     def __init__(self, smooth=1, exponent=2, loss_weight=1.0, ignore_index=-1):
         """DiceLoss.
