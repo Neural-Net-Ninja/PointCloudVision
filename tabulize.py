@@ -71,13 +71,13 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
     # Iterate through the header
     for column_name in data.columns:
         if column_name.startswith('Precision_'):
-            bar_graph[str(column_name[len('Precision_'):])] = [data.loc[best_epoch, column_name]]
+            bar_graph[str(column_name[len('Precision_'):])] = [round(data.loc[best_epoch, column_name], 2)]
         elif column_name.startswith('Recall_'):
-            bar_graph[str(column_name[len('Recall_'):])].append(data.loc[best_epoch, column_name])
+            bar_graph[str(column_name[len('Recall_'):])].append(round(data.loc[best_epoch, column_name], 2))
         elif column_name.startswith('Dice_'):
-            bar_graph[str(column_name[len('Dice_'):])].append(data.loc[best_epoch, column_name])
+            bar_graph[str(column_name[len('Dice_'):])].append(round(data.loc[best_epoch, column_name], 2))
         elif column_name.startswith('IoU_'):
-            bar_graph[str(column_name[len('IoU_'):])].append(data.loc[best_epoch, column_name])
+            bar_graph[str(column_name[len('IoU_'):])].append(round(data.loc[best_epoch, column_name], 2))
 
     table = PrettyTable()
     table.field_names = ['Class', 'Precision', 'Recall', 'Dice', 'IoU']
