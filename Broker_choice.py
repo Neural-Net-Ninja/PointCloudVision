@@ -8,13 +8,13 @@ def choose_broker(turnover, num_units):
     choice_broking_charges = 0.002 * turnover
 
     # Calculate charges for Angel One
-    #angel_one_charges = min(0.005 * turnover, 0.05 * num_units)
+    angel_one_charges = min(0.005 * turnover, 0.05 * num_units)
 
     # Determine the minimum charges and the corresponding broker
     charges = {
         "Zerodha": zerodha_charges,
         "Choice Broking": choice_broking_charges
-        # "Angel One": angel_one_charges
+        "Angel One": angel_one_charges
     }
     
     print(charges)
