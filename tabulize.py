@@ -85,4 +85,6 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
     for key, values in bar_graph.items():
         table.add_row([key] + values)
 
-    logging.info("Per-class matrics:\n%s", table)
+    title = "Per-class metrics:"
+    width = max(len(title), len(table.get_string().split('\n', 1)[0]))
+    logging.info("\n\n%s\n%s", title.center(width), table)
