@@ -1,9 +1,18 @@
-import pandas as pd
+import logging
 import re
 from pathlib import Path
 from typing import Optional, Union
+
+import pandas as pd
 from prettytable import PrettyTable
-import logging
+
+# Create a new logger
+logger = logging.getLogger('metrics_tabulator_logger')
+logger.propagate = False
+
+# Add a handler to the logger if it doesn't have one
+if not logger.handlers:
+    logger.addHandler(logging.StreamHandler())
 
 
 def tabulate_log_string(log_str: str) -> None:
@@ -12,7 +21,7 @@ def tabulate_log_string(log_str: str) -> None:
     :param log_str: string to be formatted
     :type log_str: string
     :return: formatted string
-    :rtype: string
+    :type: string
     """
     # Define the regular expression pattern to extract the values for train and test
     if "coarse" in log_str:
@@ -58,7 +67,6 @@ def tabulate_log_string(log_str: str) -> None:
             r"Test mIoU: (\d+\.\d+)"
         )
 
-        
     # Create the train and test tables
     train_table = PrettyTable()
     train_table.field_names = ["Epoch", "Loss", "Accuracy", "mPrecision", "mRecall",
@@ -78,11 +86,18 @@ def tabulate_log_string(log_str: str) -> None:
         test_table.add_row(test_values)
 
     # Log the tables
-    logging.info("Training matrics:\n%s", train_table)
-    logging.info("Testing matrics:\n%s", test_table)
+    train_title = "Training metrics:"
+    test_title = "Testing metrics:"
+
+    train_width = max(len(train_title), len(train_table.get_string().split('\n', 1)[0]))
+    test_width = max(len(test_title), len(test_table.get_string().split('\n', 1)[0]))
+
+    # Log the messages
+    logger.info("\n\n%s\n%s", train_title.center(train_width), train_table)
+    logger.info("\n\n%s\n%s", test_title.center(test_width), test_table)
 
 
-def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch: int) -> None:
+def tabulate_per_class_metrics(log_path: Optional[Union[str, Path]], best_epoch: int) -> None:
     """
     Takes a log string and formats it to be printed in a tabular format.
 
@@ -99,14 +114,17 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
 
     # Iterate through the header
     for column_name in data.columns:
-        if column_name.startswith('Precision_'):
-            bar_graph[str(column_name[len('Precision_'):])] = [round(data.loc[best_epoch, column_name], 2)]
-        elif column_name.startswith('Recall_'):
-            bar_graph[str(column_name[len('Recall_'):])].append(round(data.loc[best_epoch, column_name], 2))
-        elif column_name.startswith('Dice_'):
-            bar_graph[str(column_name[len('Dice_'):])].append(round(data.loc[best_epoch, column_name], 2))
-        elif column_name.startswith('IoU_'):
-            bar_graph[str(column_name[len('IoU_'):])].append(round(data.loc[best_epoch, column_name], 2))
+        value = data.loc[best_epoch, column_name]
+        if isinstance(value, (int, float)):
+            rounded_value = round(value, 2)
+            if column_name.startswith('Precision_'):
+                bar_graph[str(column_name[len('Precision_'):])] = [rounded_value]
+            elif column_name.startswith('Recall_'):
+                bar_graph[str(column_name[len('Recall_'):])].append(rounded_value)
+            elif column_name.startswith('Dice_'):
+                bar_graph[str(column_name[len('Dice_'):])].append(rounded_value)
+            elif column_name.startswith('IoU_'):
+                bar_graph[str(column_name[len('IoU_'):])].append(rounded_value)
 
     table = PrettyTable()
     table.field_names = ['Class', 'Precision', 'Recall', 'Dice', 'IoU']
@@ -116,19 +134,18 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
 
     title = "Per-class metrics:"
     width = max(len(title), len(table.get_string().split('\n', 1)[0]))
-    logging.info("\n\n%s\n%s", title.center(width), table)
-    
+    logger.info("\n\n%s\n%s", title.center(width), table)
 
-import re
 
-def process_log_file(file_location: str) -> None:
-    """Reads a log file, finds the last improved epoch, extracts the metrics for that epoch, and formats and logs those metrics.
+def process_log_file(file_location: Union[str, Path]) -> None:
+    """Reads a log file, finds the last improved epoch, extracts the metrics for that epoch,
+        and formats and logs those metrics.
 
     :param file_location: The location of the log file to be processed.
-    :type file_location: str
+    :type file_location: Union[str, Path]
     """
     # Read the log file
-    with open(file_location, 'r') as file:
+    with open(str(file_location), 'r') as file:
         log_data = file.read()
 
     # Find all improved epochs
@@ -142,9 +159,3 @@ def process_log_file(file_location: str) -> None:
     metrics = re.search(pattern, log_data, re.DOTALL).group(1).strip()
 
     tabulate_log_string(metrics)
-
-print(metrics)
-
-
-
-#tabulate_log_string_1(metrics)
