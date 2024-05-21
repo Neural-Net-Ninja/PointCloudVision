@@ -15,21 +15,50 @@ def tabulate_log_string(log_str: str) -> None:
     :rtype: string
     """
     # Define the regular expression pattern to extract the values for train and test
-    pattern = (
-        r"Epoch: \[(\d+)/(\d+)\] "
-        r"Train Loss: (\d+\.\d+) "
-        r"Train Accuracy: (\d+\.\d+) "
-        r"Train mPrecision: (\d+\.\d+) "
-        r"Train mRecall: (\d+\.\d+) "
-        r"Train mDice: (\d+\.\d+) "
-        r"Train mIoU: (\d+\.\d+) "
-        r"\|\| Test Loss: (\d+\.\d+) "
-        r"Test Accuracy: (\d+\.\d+) "
-        r"Test mPrecision: (\d+\.\d+) "
-        r"Test mRecall: (\d+\.\d+) "
-        r"Test mDice: (\d+\.\d+) "
-        r"Test mIoU: (\d+\.\d+)"
-    )
+    if "coarse" in log_str:
+        pattern = (
+            r".*Epoch: \[(\d+)/(\d+)\] "
+            r"Train Loss: (\d+\.\d+) "
+            r"Train Accuracy: (\d+\.\d+) "
+            r"Train mPrecision: (\d+\.\d+) "
+            r"Train mRecall: (\d+\.\d+) "
+            r"Train mDice: (\d+\.\d+) "
+            r"Train mIoU: (\d+\.\d+) "
+            r"Train Accuracy_coarse: (\d+\.\d+) "
+            r"Train mPrecision_coarse: (nan|\d+\.\d+) "
+            r"Train mRecall_coarse: (nan|\d+\.\d+) "
+            r"Train mDice_coarse: (nan|\d+\.\d+) "
+            r"Train mIoU_coarse: (nan|\d+\.\d+) "
+            r"\|\| Test Loss: (\d+\.\d+) "
+            r"Test Accuracy: (\d+\.\d+) "
+            r"Test mPrecision: (\d+\.\d+) "
+            r"Test mRecall: (\d+\.\d+) "
+            r"Test mDice: (\d+\.\d+) "
+            r"Test mIoU: (\d+\.\d+) "
+            r"Test Accuracy_coarse: (\d+\.\d+) "
+            r"Test mPrecision_coarse: (nan|\d+\.\d+) "
+            r"Test mRecall_coarse: (nan|\d+\.\d+) "
+            r"Test mDice_coarse: (nan|\d+\.\d+) "
+            r"Test mIoU_coarse: (nan|\d+\.\d+)"
+        )
+    else:
+        pattern = (
+            r".*Epoch: \[(\d+)/(\d+)\] "
+            r"Train Loss: (\d+\.\d+) "
+            r"Train Accuracy: (\d+\.\d+) "
+            r"Train mPrecision: (\d+\.\d+) "
+            r"Train mRecall: (\d+\.\d+) "
+            r"Train mDice: (\d+\.\d+) "
+            r"Train mIoU: (\d+\.\d+) "
+            r"\|\| Test Loss: (\d+\.\d+) "
+            r"Test Accuracy: (\d+\.\d+) "
+            r"Test mPrecision: (\d+\.\d+) "
+            r"Test mRecall: (\d+\.\d+) "
+            r"Test mDice: (\d+\.\d+) "
+            r"Test mIoU: (\d+\.\d+)"
+        )
+
+        
     # Create the train and test tables
     train_table = PrettyTable()
     train_table.field_names = ["Epoch", "Loss", "Accuracy", "mPrecision", "mRecall",
@@ -88,3 +117,28 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
     title = "Per-class metrics:"
     width = max(len(title), len(table.get_string().split('\n', 1)[0]))
     logging.info("\n\n%s\n%s", title.center(width), table)
+    
+
+import re
+
+# Read the log file
+with open('Q:/50Hertz/Machine_learning/test_2024_predictions/ML_test_2024/03_log/log_train.txt', 'r') as file:
+    log_data = file.read()
+
+# Find all improved epochs
+improved_epochs = re.findall(r'Epoch (\d+) improved over the previous best', log_data)
+
+# Get the last improved epoch
+last_improved_epoch = improved_epochs[-1]
+
+# Find the corresponding metrics
+pattern = r'(Epoch: \[' + re.escape(last_improved_epoch) + r'/\d+\].*?)(\n|$)'
+metrics = re.search(pattern, log_data, re.DOTALL).group(1).strip()
+
+tabulate_log_string(metrics)
+
+print(metrics)
+
+
+
+#tabulate_log_string_1(metrics)
