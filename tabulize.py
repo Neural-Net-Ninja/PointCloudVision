@@ -121,21 +121,27 @@ def tabulate_per_class_matrics(log_path: Optional[Union[str, Path]], best_epoch:
 
 import re
 
-# Read the log file
-with open('Q:/50Hertz/Machine_learning/test_2024_predictions/ML_test_2024/03_log/log_train.txt', 'r') as file:
-    log_data = file.read()
+def process_log_file(file_location: str) -> None:
+    """Reads a log file, finds the last improved epoch, extracts the metrics for that epoch, and formats and logs those metrics.
 
-# Find all improved epochs
-improved_epochs = re.findall(r'Epoch (\d+) improved over the previous best', log_data)
+    :param file_location: The location of the log file to be processed.
+    :type file_location: str
+    """
+    # Read the log file
+    with open(file_location, 'r') as file:
+        log_data = file.read()
 
-# Get the last improved epoch
-last_improved_epoch = improved_epochs[-1]
+    # Find all improved epochs
+    improved_epochs = re.findall(r'Epoch (\d+) improved over the previous best', log_data)
 
-# Find the corresponding metrics
-pattern = r'(Epoch: \[' + re.escape(last_improved_epoch) + r'/\d+\].*?)(\n|$)'
-metrics = re.search(pattern, log_data, re.DOTALL).group(1).strip()
+    # Get the last improved epoch
+    last_improved_epoch = improved_epochs[-1]
 
-tabulate_log_string(metrics)
+    # Find the corresponding metrics
+    pattern = r'(Epoch: \[' + re.escape(last_improved_epoch) + r'/\d+\].*?)(\n|$)'
+    metrics = re.search(pattern, log_data, re.DOTALL).group(1).strip()
+
+    tabulate_log_string(metrics)
 
 print(metrics)
 
