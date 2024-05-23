@@ -33,3 +33,31 @@ class TestTabulateFunctions(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+    
+    
+import unittest
+from unittest.mock import patch
+
+class TestFunctions(unittest.TestCase):
+    @patch("builtins.open", read_data="Epoch 1 improved")
+    @patch("tabulize.tabulate_log_string")
+    def test_process_log_file(self, mock_tabulate, mock_file):
+        process_log_file("dummy/path")
+        mock_file.assert_called_once()
+        mock_tabulate.assert_called_once()
+
+    @patch("tabulize.logger")
+    def test_tabulate_log_string(self, mock_logger):
+        tabulate_log_string("Epoch: [1/10] Train Loss: 0.5 Train Accuracy: 0.8")
+        self.assertEqual(mock_logger.info.call_count, 2)
+
+    @patch("tabulize.logger")
+    @patch("tabulize.pd.read_csv")
+    def test_tabulate_per_class_metrics(self, mock_read_csv, mock_logger):
+        mock_read_csv.return_value = {"Precision_class1": [0.1, 0.2]}
+        tabulate_per_class_metrics("dummy/path", 2)
+        mock_read_csv.assert_called_once()
+        mock_logger.info.assert_called_once()
+
+if __name__ == '__main__':
+    unittest.main()
