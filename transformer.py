@@ -29,6 +29,10 @@ from operations.structure import Point, serial
 
 
 class SerializedUnpooling(PointModule):
+     """
+    This class is a custom module for unpooling operation in a point cloud network.
+    It takes in a point cloud with pooled features and returns the point cloud with unpooled features.
+    """
     def __init__(
         self,
         in_channels,
@@ -68,6 +72,10 @@ class SerializedUnpooling(PointModule):
 
 @MODELS.register_module("PT-v3m1")
 class PointTransformerV3(PointModule):
+    """
+    This class represents the Point Transformer model version 3.
+    It is a deep learning model for point cloud processing tasks.
+    """
     def __init__(
         self,
         in_channels=6,
