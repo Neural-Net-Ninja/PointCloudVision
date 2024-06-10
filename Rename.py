@@ -14,10 +14,7 @@ for file in files:
     
     # Rename the file
     os.rename(file, new_name)
-    
 
-import os
-import glob
 
 # Define the directory path
 dir_path = r"Q:\50Hertz\Paket_1\ML\00\02_output\L951"
