@@ -12,8 +12,8 @@ def copy_directory_structure(src_dir, dst_dir):
             os.makedirs(dst_path)
 
 # Define your directories
-src_dir = r'Q:\50Hertz\Paket_1'
-dst_dir = r'Q:\50Hertz\Paket_1\PCT_Converted_Data'
+src_dir = r'Q:\50Hertz\Paket_1\PCT_Converted_Data'
+dst_dir = r'Q:\50Hertz\Paket_1\PCT_Converted_Data_Density_reduced'
 
 # Copy directory structure
 copy_directory_structure(src_dir, dst_dir)
