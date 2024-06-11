@@ -2,31 +2,31 @@ import os
 import glob
 
 # Specify the directory
-directory = r"Q:\50Hertz\Paket_1\ML\00\02_output\L951"
+directory = r"Q:\50Hertz\Paket_1\ML\00\02_output\L971"
 
 # Get a list of all files in the directory
-files = glob.glob(os.path.join(directory, '*_preprocessed*'))
+files = glob.glob(os.path.join(directory, '*'))
 
 # Iterate over each file
-for file in files:
-    # Get the new name by removing '_preprocessed' from the file name
-    new_name = file.replace('_preprocessed', '')
-    
-    # Rename the file
-    os.rename(file, new_name)
+for file_path in files:
+    # Extract the file name from the path
+    file_name = os.path.basename(file_path)
+    # Initialize a variable to check if the file name was modified
+    modified = False
 
+    # Check if "_preprocessed" is in the file name
+    if '_preprocessed' in file_name:
+        # Get the new name by removing '_preprocessed' from the file name
+        file_name = file_name.replace('_preprocessed', '')
+        modified = True
 
-# Define the directory path
-dir_path = r"Q:\50Hertz\Paket_1\ML\00\02_output\L951"
+    # Check if "density_reduced" is in the file name
+    if "density_reduced" in file_name:
+        # Construct a new file name by replacing "density_reduced" with an empty string
+        file_name = file_name.replace("density_reduced", "")
+        modified = True
 
-# Get a list of all files in the directory
-files = glob.glob(os.path.join(dir_path, '*'))
-
-# Iterate over the list of files
-for file in files:
-    # Check if "density_reduced" is in the filename
-    if "density_reduced" in file:
-        # Construct a new filename by replacing "density_reduced" with an empty string
-        new_filename = file.replace("density_reduced", "")
-        # Rename the file
-        os.rename(file, new_filename)
+    # Rename the file if it was modified
+    if modified:
+        new_file_path = os.path.join(directory, file_name)
+        os.rename(file_path, new_file_path)
