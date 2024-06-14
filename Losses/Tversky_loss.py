@@ -25,35 +25,28 @@ class TverskyLoss(nn.Module):
         self.epoch = 0  # Track the current epoch for dynamic adjustments
 
     def forward(self, inputs, targets):
-        """
-        Forward pass of the Tversky Loss.
-
-        :param inputs: Predictions tensor of shape (N, C, H, W), where C = number of classes.
-        :param targets: Ground truth tensor of shape (N, H, W) with class indices.
-        :returns: Computed Tversky Loss.
-        """
-        # Convert targets to one-hot encoding
         targets_one_hot = F.one_hot(targets, num_classes=inputs.shape[1]).permute(0, 3, 1, 2).float()
 
-        # Flatten label and prediction tensors
-        inputs = inputs.view(-1)
-        targets_one_hot = targets_one_hot.view(-1)
+        if self.class_weights is not None:
+            targets_one_hot = targets_one_hot * self.class_weights.view(1, -1, 1, 1)
 
-        # True positives, false positives, and false negatives
-        TP = (inputs * targets_one_hot).sum()
-        FP = ((1 - targets_one_hot) * inputs).sum()
-        FN = (targets_one_hot * (1 - inputs)).sum()
+        inputs_flat = inputs.view(-1)
+        targets_flat = targets_one_hot.view(-1)
 
-        # Calculate Tversky score
+        TP = (inputs_flat * targets_flat).sum()
+        FP = ((1 - targets_flat) * inputs_flat).sum()
+        FN = (targets_flat * (1 - inputs_flat)).sum()
+
         Tversky = (TP + self.smooth) / (TP + self.alpha * FP + self.beta * FN + self.smooth)
-
-        # Compute Tversky loss
         loss = 1 - Tversky
 
-        # Apply reduction
+        if self.dynamic_focus:
+            self.adjust_focus(TP, FP, FN)
+
         if self.reduction == 'mean':
-            return loss.mean()
+            loss = loss.mean()
         elif self.reduction == 'sum':
-            return loss.sum()
-        else:
-            return loss
+            loss = loss.sum()
+
+        self.logger.info(f'Epoch {self.epoch}: Tversky Loss = {loss.item()}')
+        return loss
