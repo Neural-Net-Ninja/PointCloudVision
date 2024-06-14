@@ -50,3 +50,22 @@ class TverskyLoss(nn.Module):
 
         self.logger.info(f'Epoch {self.epoch}: Tversky Loss = {loss.item()}')
         return loss
+
+    def adjust_focus(self, TP, FP, FN):
+        """
+        Dynamically adjusts alpha and beta based on the performance of the last epoch.
+        """
+        if TP + FP == 0 or TP + FN == 0:  # Avoid division by zero
+            return
+        precision = TP / (TP + FP)
+        recall = TP / (TP + FN)
+        if precision < recall:
+            self.alpha *= 0.95
+            self.beta *= 1.05
+        else:
+            self.alpha *= 1.05
+            self.beta *= 0.95
+        self.alpha = max(min(self.alpha, 0.9), 0.1)
+        self.beta = max(min(self.beta, 0.9), 0.1)
+        self.epoch += 1
+        self.logger.info(f'Adjusted alpha to {self.alpha}, beta to {self.beta} for epoch {self.epoch}')
