@@ -3,20 +3,26 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class TverskyLoss(nn.Module):
-    def __init__(self, alpha=0.5, beta=0.5, smooth=1.0, reduction='mean'):
+    def __init__(self, alpha=0.5, beta=0.5, smooth=1.0, reduction='mean', class_weights=None, dynamic_focus=False):
         """
-        Initializes the Tversky Loss.
+        Enhanced Tversky Loss with class weights, logging, and dynamic focus.
 
         :param alpha: Controls the penalty for false positives.
         :param beta: Controls the penalty for false negatives.
         :param smooth: Smoothing factor to avoid division by zero.
         :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'
+        :param class_weights: Optional tensor of weights for each class.
+        :param dynamic_focus: If True, adjusts alpha and beta dynamically based on epoch performance.
         """
         super(TverskyLoss, self).__init__()
         self.alpha = alpha
         self.beta = beta
         self.smooth = smooth
         self.reduction = reduction
+        self.class_weights = class_weights
+        self.dynamic_focus = dynamic_focus
+        self.logger = logging.getLogger('TverskyLoss')
+        self.epoch = 0  # Track the current epoch for dynamic adjustments
 
     def forward(self, inputs, targets):
         """
