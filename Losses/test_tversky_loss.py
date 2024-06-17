@@ -22,6 +22,21 @@ class TestTverskyLoss(unittest.TestCase):
         result = loss(self.inputs, self.targets)
         self.assertTrue(torch.is_tensor(result))
         self.assertGreater(result.item(), 0)
+        
+    def test_class_weights(self):
+        class_weights = torch.tensor([0.5, 2.0])
+        loss = TverskyLoss(class_weights=class_weights)
+        result_with_weights = loss(self.inputs, self.targets)
+        result_without_weights = TverskyLoss()(self.inputs, self.targets)
+        self.assertNotEqual(result_with_weights.item(), result_without_weights.item())
+
+    def test_dynamic_focus(self):
+        loss = TverskyLoss(dynamic_focus=True)
+        initial_alpha = loss.alpha
+        initial_beta = loss.beta
+        loss(self.inputs, self.targets)  # Trigger dynamic focus adjustment
+        self.assertNotEqual(initial_alpha, loss.alpha)
+        self.assertNotEqual(initial_beta, loss.beta)
 
 if __name__ == '__main__':
     unittest.main()
