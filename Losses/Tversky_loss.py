@@ -81,6 +81,16 @@ class TverskyLoss(nn.Module):
         mock_logging.getLogger('TverskyLoss').info.assert_called()
 
     def forward(self, inputs, targets):
+        """
+        Forward pass of the Tversky loss function.
+
+        Parameters:
+        - inputs (Tensor): Predicted probabilities for each class.
+        - targets (Tensor): Ground truth labels.
+
+        Returns:
+        - loss (Tensor): Computed Tversky loss.
+        """
         targets_one_hot = F.one_hot(targets, num_classes=inputs.shape[1]).permute(0, 3, 1, 2).float()
 
         if self.class_weights is not None:
@@ -110,6 +120,14 @@ class TverskyLoss(nn.Module):
     def adjust_focus(self, TP, FP, FN):
         """
         Dynamically adjusts alpha and beta based on the performance of the last epoch.
+
+        Parameters:
+        - TP (float): True positives.
+        - FP (float): False positives.
+        - FN (float): False negatives.
+
+        Returns:
+        - None
         """
         if TP + FP == 0 or TP + FN == 0:  # Avoid division by zero
             return
