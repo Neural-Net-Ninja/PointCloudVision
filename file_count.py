@@ -1,33 +1,38 @@
 import os
 
-def count_specific_files_with_details(directory, extensions=('.laz', '.txt', '.xpc')):
+def count_specific_files(directory, extensions=('.laz')):  # '.txt', '.xpc'
     """
-    Counts all files within a directory (and its subdirectories) that end with specific extensions
-    and provides details about the count and names of files in each directory.
+    Counts all files within a directory (and its subdirectories) that end with specific extensions,
+    and prints the count for each folder with only the last folder name.
+    The main folder name is printed centered at the top.
 
     Parameters:
     - directory (str): The root directory to start counting from.
     - extensions (tuple): A tuple of file extensions to count, in lowercase.
 
     Returns:
-    - dict: A dictionary where each key is a directory path, and the value is another dictionary
-            with keys 'count' for the number of files and 'files' for the list of filenames.
+    - None
     """
-    details = {}
+    folder_counts = {}  # Dictionary to hold counts per folder
+    total_count = 0  # Variable to hold the total count
+
+    main_folder_name = os.path.basename(directory)
+    print(f"{main_folder_name.center(50)}")  # Center the main folder name
+
     for root, dirs, files in os.walk(directory):
-        print(f"Checking directory: {root}")  # Diagnostic print statement
-        details[root] = {'count': 0, 'files': []}
-        for file in files:
-            if file.lower().endswith(extensions):
-                details[root]['count'] += 1
-                details[root]['files'].append(file)
-    return details
+        count = sum(1 for file in files if file.lower().endswith(extensions))
+        if count > 0:
+            last_folder_name = os.path.basename(root)  # Get the last part of the folder path
+            folder_counts[last_folder_name] = count
+            total_count += count
 
+    # Print the count for each folder
+    for folder, count in folder_counts.items():
+        print(f"{folder}: {count} files")
+
+    # Print the total count
+    print(f"Total number of .laz, .txt, and .xpc files: {total_count}")
+
+# Example usage
 directory = r'Q:\50Hertz\Paket_2'
-details = count_specific_files_with_details(directory)
-
-for dir_path, info in details.items():
-    print(f"Directory: {dir_path}")
-    print(f"Total number of .Laz, .txt, and .Xpc files: {info['count']}")
-    print("Files:", ", ".join(info['files']))
-    print("----------")
+count_specific_files(directory)
