@@ -1,24 +1,33 @@
 import os
 
-def count_specific_files(directory, extensions=('.laz', '.txt', '.xpc')):  # Lowercase extensions
+def count_specific_files_with_details(directory, extensions=('.laz', '.txt', '.xpc')):
     """
-    Counts all files within a directory (and its subdirectories) that end with specific extensions.
+    Counts all files within a directory (and its subdirectories) that end with specific extensions
+    and provides details about the count and names of files in each directory.
 
     Parameters:
     - directory (str): The root directory to start counting from.
     - extensions (tuple): A tuple of file extensions to count, in lowercase.
 
     Returns:
-    - int: The total count of files matching the specified extensions.
+    - dict: A dictionary where each key is a directory path, and the value is another dictionary
+            with keys 'count' for the number of files and 'files' for the list of filenames.
     """
-    count = 0
+    details = {}
     for root, dirs, files in os.walk(directory):
+        print(f"Checking directory: {root}")  # Diagnostic print statement
+        details[root] = {'count': 0, 'files': []}
         for file in files:
-            if file.lower().endswith(extensions):  # Convert filename to lowercase before checking
-                count += 1
-    return count
+            if file.lower().endswith(extensions):
+                details[root]['count'] += 1
+                details[root]['files'].append(file)
+    return details
 
-# Example usage
 directory = r'Q:\50Hertz\Paket_2'
-file_count = count_specific_files(directory)
-print(f"Total number of .Laz, .txt, and .Xpc files: {file_count}")
+details = count_specific_files_with_details(directory)
+
+for dir_path, info in details.items():
+    print(f"Directory: {dir_path}")
+    print(f"Total number of .Laz, .txt, and .Xpc files: {info['count']}")
+    print("Files:", ", ".join(info['files']))
+    print("----------")

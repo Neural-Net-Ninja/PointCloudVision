@@ -11,9 +11,10 @@ def copy_directory_structure(src_dir, dst_dir):
         if not os.path.exists(dst_path):
             os.makedirs(dst_path)
 
+
 # Define your directories
-src_dir = r'Q:\50Hertz\Paket_1\PCT_Converted_Data'
-dst_dir = r'Q:\50Hertz\Paket_1\PCT_Converted_Data_Density_reduced'
+src_dir = r'Q:\50Hertz\Paket_2'
+dst_dir = r'Q:\50Hertz\Paket_2\PCT_Converted_Data'
 
 # Copy directory structure
 copy_directory_structure(src_dir, dst_dir)
