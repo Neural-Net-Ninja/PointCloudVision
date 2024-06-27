@@ -29,3 +29,5 @@ python -m torch.utils.collect_env
 pip uninstall torch torchaudio torchvision torch-cluster torch-geometric torch-scatter torch-sparse torch-spline-conv
 
 python scripts/execute_pipeline.py --steps preprocess train predict -p Q:\Power_grid\AI_int_DTM\power_grid.json
+
+(pcnn) C:\Machine_learning\pcnn>python scripts/execute_pipeline.py --steps train predict -p Q:\50Hertz\Paket_2\ML_paket_2\paket_2_pipeline.json

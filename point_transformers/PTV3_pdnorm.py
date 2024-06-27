@@ -16,6 +16,41 @@ from pointcept.models.utils import offset2batch, batch2offset
 
 
 class PDBatchNorm(torch.nn.Module):
+    """
+    A custom PyTorch Module for performing batch normalization, potentially with decoupling and adaptive modulation
+    based on external context. This module supports conditional batch normalization where different normalization
+    parameters are used based on a specified condition.
+
+    Attributes:
+        conditions (tuple of str): A tuple of strings representing the conditions under which different batch
+                                   normalization parameters should be applied.
+        decouple (bool): If True, uses a separate batch normalization layer for each condition specified in
+                         `conditions`. If False, uses a single batch normalization layer for all inputs.
+        adaptive (bool): If True, applies an adaptive shift and scale to the normalized features based on an
+                         external context. This requires `context` to be provided in the forward pass.
+        affine (bool): If True, the batch normalization layers will have learnable affine parameters.
+
+    Parameters:
+        num_features (int): Number of features in the input tensor to be normalized.
+        context_channels (int, optional): Number of channels in the external context tensor. Required if `adaptive`
+                                          is True. Defaults to 256.
+        eps (float, optional): A value added to the denominator for numerical stability in batch normalization.
+                               Defaults to 1e-3.
+        momentum (float, optional): Momentum for the moving average in batch normalization. Defaults to 0.01.
+        conditions (tuple of str, optional): Conditions under which different batch normalization parameters should
+                                              be applied. Defaults to ("ScanNet", "S3DIS", "Structured3D").
+        decouple (bool, optional): Whether to use decoupled batch normalization layers for each condition.
+                                   Defaults to True.
+        adaptive (bool, optional): Whether to apply adaptive modulation based on an external context. Defaults to False.
+        affine (bool, optional): Whether the batch normalization layers should have learnable affine parameters.
+                                 Defaults to True.
+
+    Methods:
+        forward(feat, condition=None, context=None): Normalizes the input features `feat`. If `decouple` is True,
+                                                     applies normalization based on the specified `condition`. If
+                                                     `adaptive` is True, additionally applies an adaptive shift and
+                                                     scale based on the `context`.
+    """
     def __init__(
         self,
         num_features,
