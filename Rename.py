@@ -2,7 +2,7 @@ import os
 import glob
 
 # Specify the directory
-directory = r"Q:\50Hertz\Paket_1\ML\00\02_output\L971"
+directory = r"Q:\50Hertz\Paket_2\ML_paket_2\02_output\L331"
 
 # Get a list of all files in the directory
 files = glob.glob(os.path.join(directory, '*'))
@@ -24,6 +24,12 @@ for file_path in files:
     if "density_reduced" in file_name:
         # Construct a new file name by replacing "density_reduced" with an empty string
         file_name = file_name.replace("density_reduced", "")
+        modified = True
+
+    # Use regular expression to remove patterns like "part_0", "part_1", etc.
+    part_pattern = re.compile(r'part_\d+')
+    if part_pattern.search(file_name):
+        file_name = part_pattern.sub('', file_name)
         modified = True
 
     # Rename the file if it was modified
