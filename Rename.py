@@ -27,10 +27,10 @@ for file_path in files:
         modified = True
 
     # Use regular expression to remove patterns like "part_0", "part_1", etc.
-    part_pattern = re.compile(r'part_\d+')
-    if part_pattern.search(file_name):
-        file_name = part_pattern.sub('', file_name)
-        modified = True
+    # part_pattern = re.compile(r'part_\d+')
+    # if part_pattern.search(file_name):
+    #     file_name = part_pattern.sub('', file_name)
+    #     modified = True
 
     # Rename the file if it was modified
     if modified:
