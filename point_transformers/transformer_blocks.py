@@ -298,6 +298,7 @@ class Block_v3(PointModule):
         Returns:
             Point: Processed point cloud data.
         """
+        # Shortcut connection
         shortcut = point.feat
         point = self.cpe(point)
         point.feat = shortcut + point.feat
@@ -314,4 +315,5 @@ class Block_v3(PointModule):
         point.feat = shortcut + point.feat
 
         point.sparse_conv_feat.replace_feature(point.feat)
+
         return point
