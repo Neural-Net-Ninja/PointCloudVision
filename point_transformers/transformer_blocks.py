@@ -196,91 +196,122 @@ class BlockSequence(nn.Module):
 
         return features
 
-    class Block_v3(PointModule):
-        def __init__(
-            self,
-            channels,
-            num_heads,
-            patch_size=48,
-            mlp_ratio=4.0,
-            qkv_bias=True,
-            qk_scale=None,
-            attn_drop=0.0,
-            proj_drop=0.0,
-            drop_path=0.0,
-            norm_layer=nn.LayerNorm,
-            act_layer=nn.GELU,
-            pre_norm=True,
-            order_index=0,
-            cpe_indice_key=None,
-            enable_rpe=False,
-            enable_flash=True,
-            upcast_attention=True,
-            upcast_softmax=True,
-        ):
-            super().__init__()
-            self.channels = channels
-            self.pre_norm = pre_norm
+    from typing import Optional, Type
 
-            self.cpe = PointSequential(
-                spconv.SubMConv3d(
-                    channels,
-                    channels,
-                    kernel_size=3,
-                    bias=True,
-                    indice_key=cpe_indice_key,
-                ),
-                nn.Linear(channels, channels),
-                norm_layer(channels),
-            )
+class Block_v3(PointModule):
+    """
+    A transformer block version 3 for processing point cloud data.
+    
+    Attributes:
+        channels (int): Number of channels in the input and output.
+        num_heads (int): Number of attention heads.
+        patch_size (int): Size of each patch.
+        mlp_ratio (float): Ratio for determining the hidden layer size of the MLP.
+        qkv_bias (bool): Whether to include bias in the QKV computation.
+        qk_scale (Optional[float]): Scaling factor for QK computation. If None, scale is set dynamically.
+        attn_drop (float): Dropout rate for attention weights.
+        proj_drop (float): Dropout rate for output projection.
+        drop_path (float): Dropout rate for paths.
+        norm_layer (Type[nn.Module]): Normalization layer class.
+        act_layer (Type[nn.Module]): Activation layer class.
+        pre_norm (bool): Whether to use pre-normalization.
+        order_index (int): Order index for serialized attention.
+        cpe_indice_key (Optional[str]): Key for CPE indices.
+        enable_rpe (bool): Whether to enable relative position encoding.
+        enable_flash (bool): Whether to enable FLASH attention.
+        upcast_attention (bool): Whether to upcast attention computation.
+        upcast_softmax (bool): Whether to upcast softmax computation.
+    """
+    def __init__(
+        self,
+        channels: int,
+        num_heads: int,
+        patch_size: int = 48,
+        mlp_ratio: float = 4.0,
+        qkv_bias: bool = True,
+        qk_scale: Optional[float] = None,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
+        drop_path: float = 0.0,
+        norm_layer: Type[nn.Module] = nn.LayerNorm,
+        act_layer: Type[nn.Module] = nn.GELU,
+        pre_norm: bool = True,
+        order_index: int = 0,
+        cpe_indice_key: Optional[str] = None,
+        enable_rpe: bool = False,
+        enable_flash: bool = True,
+        upcast_attention: bool = True,
+        upcast_softmax: bool = True,
+    ):
+        super().__init__()
+        self.channels = channels
+        self.pre_norm = pre_norm
 
-            self.norm1 = PointSequential(norm_layer(channels))
-            self.attn = SerializedAttention(
-                channels=channels,
-                patch_size=patch_size,
-                num_heads=num_heads,
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                attn_drop=attn_drop,
-                proj_drop=proj_drop,
-                order_index=order_index,
-                enable_rpe=enable_rpe,
-                enable_flash=enable_flash,
-                upcast_attention=upcast_attention,
-                upcast_softmax=upcast_softmax,
-            )
-            self.norm2 = PointSequential(norm_layer(channels))
-            self.mlp = PointSequential(
-                MLP(
-                    in_channels=channels,
-                    hidden_channels=int(channels * mlp_ratio),
-                    out_channels=channels,
-                    act_layer=act_layer,
-                    drop=proj_drop,
-                )
-            )
-            self.drop_path = PointSequential(
-                DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-            )
+        self.cpe = PointSequential(
+            spconv.SubMConv3d(
+                channels,
+                channels,
+                kernel_size=3,
+                bias=True,
+                indice_key=cpe_indice_key,
+            ),
+            nn.Linear(channels, channels),
+            norm_layer(channels),
+        )
 
-        def forward(self, point: Point):
-            shortcut = point.feat
-            point = self.cpe(point)
-            point.feat = shortcut + point.feat
-            shortcut = point.feat
-            if self.pre_norm:
-                point = self.norm1(point)
-            point = self.drop_path(self.attn(point))
-            point.feat = shortcut + point.feat
-            if not self.pre_norm:
-                point = self.norm1(point)
+        self.norm1 = PointSequential(norm_layer(channels))
+        self.attn = SerializedAttention(
+            channels=channels,
+            patch_size=patch_size,
+            num_heads=num_heads,
+            qkv_bias=qkv_bias,
+            qk_scale=qk_scale,
+            attn_drop=attn_drop,
+            proj_drop=proj_drop,
+            order_index=order_index,
+            enable_rpe=enable_rpe,
+            enable_flash=enable_flash,
+            upcast_attention=upcast_attention,
+            upcast_softmax=upcast_softmax,
+        )
+        self.norm2 = PointSequential(norm_layer(channels))
+        self.mlp = PointSequential(
+            MLP(
+                in_channels=channels,
+                hidden_channels=int(channels * mlp_ratio),
+                out_channels=channels,
+                act_layer=act_layer,
+                drop=proj_drop,
+            )
+        )
+        self.drop_path = PointSequential(
+            DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
+        )
 
-            shortcut = point.feat
-            if self.pre_norm:
-                point = self.norm2(point)
-            point = self.drop_path(self.mlp(point))
-            point.feat = shortcut + point.feat
-            if not self.pre_norm:
-                point = self.norm2(point)
-            point.sparse_conv_feat.replace_feature(point.feat)
-            return point
+    def forward(self, point: Point) -> Point:
+        """
+        Forward pass of the Block_v3.
+        
+        Args:
+            point (Point): Input point cloud data.
+            
+        Returns:
+            Point: Processed point cloud data.
+        """
+        shortcut = point.feat
+        point = self.cpe(point)
+        point.feat = shortcut + point.feat
+
+        if self.pre_norm:
+            point = self.norm1(point)
+        point = self.drop_path(self.attn(point))
+        point.feat = shortcut + point.feat
+
+        shortcut = point.feat
+        if self.pre_norm:
+            point = self.norm2(point)
+        point = self.drop_path(self.mlp(point))
+        point.feat = shortcut + point.feat
+
+        point.sparse_conv_feat.replace_feature(point.feat)
+        return point
