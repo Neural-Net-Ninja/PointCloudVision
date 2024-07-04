@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -18,7 +18,7 @@ if not logger.handlers:
 class MetricTabulator:
     """
     This class reads a log file, finds the last improved epoch, extracts the metrics for that epoch,
-    and formats and logs those metrics. It contains functions to tabulate the metrics from a log file 
+    and formats and logs those metrics. It contains functions to tabulate the metrics from a log file
     and print them in a formatted way.
     Methods:
     :param log_file_path: String to be formatted.
@@ -29,9 +29,9 @@ class MetricTabulator:
     :type best_epoch: int
     """
     def __init__(self,
-                 log_file_path: Union[str, Path],
-                 per_class_metric_file_path: Union[str, Path],
-                 best_epoch: int) -> None:
+                 log_file_path: Optional[Union[str, Path]] = None,
+                 per_class_metric_file_path: Optional[Union[str, Path]] = None,
+                 best_epoch: Optional[int] = None) -> None:
 
         self.log_file_path = log_file_path
         self.per_class_metric_file_path = per_class_metric_file_path
@@ -52,7 +52,14 @@ class MetricTabulator:
 
         # Find the corresponding metrics
         pattern = r'(Epoch: \[' + re.escape(last_improved_epoch) + r'/\d+\].*?)(\n|$)'
-        log_str = re.search(pattern, log_data, re.DOTALL).group(1).strip()
+
+        # log_str = re.search(pattern, log_data, re.DOTALL).group(1).strip()
+        match = re.search(pattern, log_data, re.DOTALL)
+        if match:
+            log_str = match.group(1).strip()
+        else:
+            # Handle the case where no match is found
+            return
 
         # Define the regular expression pattern to extract the values for train and test
         if "coarse" in log_str:
