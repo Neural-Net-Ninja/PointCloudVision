@@ -13,8 +13,8 @@ def copy_directory_structure(src_dir, dst_dir):
 
 
 # Define your directories
-src_dir = r'Q:\50Hertz\Paket_2'
-dst_dir = r'Q:\50Hertz\Paket_2\PCT_Converted_Data'
+src_dir = r'K:\Spie\Paket_3'
+dst_dir = r'K:\Spie\Paket_3\PCT_Converted_Data'
 
 # Copy directory structure
 copy_directory_structure(src_dir, dst_dir)

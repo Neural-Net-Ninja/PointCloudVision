@@ -1,40 +1,6 @@
-"""
-The Lovász hinge loss, or simply Lovász loss, is a loss function commonly used in the context of structured prediction 
-problems, particularly in semantic image segmentation tasks. 
-It extends the concept of the hinge loss, which is often used in binary classification tasks, to handle structured 
-output spaces where the order of predictions matters, such as segmentation masks.
-
-The Lovász loss is particularly suitable for optimizing binary classification tasks with partial labels or imbalanced
-classes. It measures the difference between predicted and ground truth segmentation masks in terms of the intersection 
-over union (IoU) metric, also known as the Jaccard index.
-
-
-Ordered Segmentation Masks: Lovász loss operates on ordered segmentation masks, where the pixels are sorted based on 
-their predicted scores or probabilities. This ordering is crucial for computing the loss and ensures that the loss is 
-permutation invariant.
-Differentiable: Lovász loss is differentiable almost everywhere, allowing it to be used seamlessly with gradient-based 
-optimization algorithms like stochastic gradient descent (SGD).
-Extension of Hinge Loss: The Lovász loss can be seen as an extension of the hinge loss, which is commonly used in binary
-classification problems. Instead of penalizing misclassifications directly, it penalizes deviations from the ideal 
-ordering of predictions.
-Interpretation: The Lovász loss can be interpreted as the average disagreement between predicted and ground truth 
-segmentation masks, measured by the IoU metric.
-Optimization: It is optimized directly with respect to the predicted scores or probabilities, rather than being 
-indirectly optimized through a surrogate loss like cross-entropy.
-Robustness: Lovász loss is known for its robustness to label noise and partial annotations, making it suitable for 
-scenarios where ground truth labels may be incomplete or imprecise.
-Application: Lovász loss finds widespread application in tasks such as semantic image segmentation, where the goal is 
-to assign a semantic label to each pixel in an image.
-In summary, the Lovász loss offers a principled way to optimize structured prediction tasks, particularly in scenarios 
-where traditional loss functions may not be well-suited due to the nature of the output space. Its flexibility, 
-differentiability, and robustness make it a valuable tool in the machine learning toolbox for tasks involving structured
-outputs.
-"""
-
-
 __all__ = ['LovaszLoss']
 
-from typing import Optional, Literal, Iterable, Union, Tuple, List
+from typing import Optional, Literal, Union, Tuple, List, Iterator
 from itertools import filterfalse
 
 import torch
@@ -47,7 +13,7 @@ class LovaszLoss(SegmentationLoss):
     Lovasz loss for segmentation task.
 
     :param class_seen: Class seen. Defaults to None.
-    :type class_seen: Optional[int], optional
+    :type class_seen: Optional[List[int]], optional
     :param per_point: If True, loss computed per each image and then averaged, else computed per whole batch
         Defaults to False.
     :type per_point: bool, optional
@@ -58,7 +24,7 @@ class LovaszLoss(SegmentationLoss):
     """
     def __init__(self,
                  apply_softmax: bool = True,
-                 class_seen: Optional[int] = None,
+                 class_seen: Optional[List[int]] = None,
                  per_point: bool = False,
                  ignore_index: Optional[int] = None,
                  label_smoothing: float = 0.0,
@@ -74,7 +40,7 @@ class LovaszLoss(SegmentationLoss):
                         probas: Tensor,
                         labels: Tensor,
                         classes: str = "present",
-                        class_seen: Optional[int] = None,
+                        class_seen: Optional[List[int]] = None,
                         per_point: bool = False,
                         ignore: Optional[int] = None) -> Tensor:
         """
@@ -94,7 +60,7 @@ class LovaszLoss(SegmentationLoss):
         :type classes: str, optional
         :param class_seen: An optional integer representing a class index that has been observed.
             If provided, only this class is considered for loss computation. Defaults to None.
-        :type class_seen: Optional[int], optional
+        :type class_seen: Optional[List[int]], optional
         :param per_point: If True, compute the loss per image instead of per batch. Defaults to False.
         :type per_point: bool, optional
         :param ignore: Void class labels to be ignored in loss computation. Defaults to None.
@@ -168,7 +134,7 @@ class LovaszLoss(SegmentationLoss):
 
             # Apply the class weight
             if self.weight is not None:
-                class_weight = self.weight[c]
+                class_weight = self.weight[torch.tensor(c)]
                 loss *= class_weight
 
             losses.append(loss)
@@ -220,9 +186,8 @@ class LovaszLoss(SegmentationLoss):
         return x != x
 
     def mean(self,
-             values: list[Tensor],
-             ignore_nan: bool = False,
-             empty: Union[int, str, float] = 0) -> torch.Tensor:
+             values: List[Tensor],
+             ignore_nan: bool = False) -> torch.Tensor:
         """
         Calculate the mean (average) of a sequence of numbers, supporting NaN values and generators.
 
@@ -238,21 +203,16 @@ class LovaszLoss(SegmentationLoss):
         :rtype: Union[float, int]
         :raises ValueError: If the sequence is empty and 'empty' is set to "raise".
         """
-        values = iter(values)
+        values_iter: Iterator[Tensor] = iter(values)
         if ignore_nan:
-            values = values = filterfalse(self.isnan, values)
-        try:
-            n = 1
-            acc = next(values)
-        except StopIteration:
-            if empty == "raise":
-                raise ValueError("Empty mean")
-            return empty
-        for n, v in enumerate(values, 2):
-            acc += v
-        if n == 1:
-            return acc
-        return acc / n
+            values_iter = filterfalse(self.isnan, values_iter)
+
+        acc = next(values_iter)
+        count = 1
+
+        for count, value in enumerate(values_iter, start=2):
+            acc += value
+        return acc if count == 1 else acc / count
 
     def _lovasz_grad(self,
                      gt_sorted: torch.Tensor) -> torch.Tensor:
@@ -300,7 +260,3 @@ class LovaszLoss(SegmentationLoss):
             loss = point_weight * loss
 
         return self._reduce_loss(loss)
-
-
-
-

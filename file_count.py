@@ -34,5 +34,5 @@ def count_specific_files(directory, extensions=('.laz')):  # '.txt', '.xpc'
     print(f"Total number of .laz, .txt, and .xpc files: {total_count}")
 
 # Example usage
-directory = r'Q:\50Hertz\Paket_2'
+directory = r'K:\Spie\Paket_3'
 count_specific_files(directory)
