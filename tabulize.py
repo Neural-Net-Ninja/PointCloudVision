@@ -1,7 +1,6 @@
 import logging
 import re
-from pathlib import Path
-from typing import Union, Optional
+from typing import List
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -17,49 +16,27 @@ if not logger.handlers:
 
 class MetricTabulator:
     """
-    This class reads a log file, finds the last improved epoch, extracts the metrics for that epoch,
-    and formats and logs those metrics. It contains functions to tabulate the metrics from a log file
-    and print them in a formatted way.
-    Methods:
-    :param log_file_path: String to be formatted.
-    :type log_file_path: str or Path
-    :param per_class_metric_file_path: Path to the log for per class metrics.
-    :type per_class_metric_file_path: str or Path
-    :param best_epoch: Epoch with the best metrics.
-    :type best_epoch: int
+    This class is responsible for processing and formatting metrics from log files. It provides methods to:
+
+    1. Parse log strings to extract training and testing metrics.
+    2. Format these metrics into a tabular format for easy logging and visualization.
+    3. Handle both standard and "coarse" metrics if present in the log data.
+    4. Tabulate per-class metrics for a specified epoch.
+
+    This class is useful for analyzing and presenting model performance metrics in a structured and readable manner.
     """
-    def __init__(self,
-                 log_file_path: Optional[Union[str, Path]] = None,
-                 per_class_metric_file_path: Optional[Union[str, Path]] = None,
-                 best_epoch: Optional[int] = None) -> None:
-
-        self.log_file_path = log_file_path
-        self.per_class_metric_file_path = per_class_metric_file_path
-        self.best_epoch = best_epoch
-
-    def tabulate_log_string(self) -> None:
-        """Takes a log string and formats it to be printed in a tabular format.
+    def tabulate_log_string(self, log_data: str) -> None:
         """
-        # Read the log file
-        with open(str(self.log_file_path), 'r') as file:
-            log_data = file.read()
+        Parses a log string to extract training and testing metrics, and formats them into a tabular format for logging.
 
-        # Find all improved epochs
-        improved_epochs = re.findall(r'Epoch (\d+) improved over the previous best', log_data)
+        The method uses regular expressions to extract metrics such as loss, accuracy, precision, recall, dice, and IoU
+        for both training and testing phases. If the log string contains "coarse" metrics, it will also extract those.
 
-        # Get the last improved epoch
-        last_improved_epoch = improved_epochs[-1]
-
-        # Find the corresponding metrics
-        pattern = r'(Epoch: \[' + re.escape(last_improved_epoch) + r'/\d+\].*?)(\n|$)'
-
-        # log_str = re.search(pattern, log_data, re.DOTALL).group(1).strip()
-        match = re.search(pattern, log_data, re.DOTALL)
-        if match:
-            log_str = match.group(1).strip()
-        else:
-            # Handle the case where no match is found
-            return
+        :param log_data: The log string to be formatted.
+        :type log_data: str
+        :return: None
+        """
+        log_str = log_data.strip()
 
         # Define the regular expression pattern to extract the values for train and test
         if "coarse" in log_str:
@@ -122,48 +99,68 @@ class MetricTabulator:
                             float(match.group(12)), float(match.group(13)), float(match.group(14))]
             train_table.add_row(train_values)
             test_table.add_row(test_values)
+        else:
+            logging.warning("No match found for last improved epoch, aborting log tabulation.")
+            return
 
         # Log the tables
         train_title = "Training metrics:"
         test_title = "Testing metrics:"
 
-        train_width = max(len(train_title), len(train_table.get_string().split('\n', 1)[0]))
-        test_width = max(len(test_title), len(test_table.get_string().split('\n', 1)[0]))
-
         # Log the messages
-        logger.info("\n\n%s\n%s", train_title.center(train_width), train_table)
-        logger.info("\n\n%s\n%s", test_title.center(test_width), test_table)
+        logger.info("%s\n%s", train_title, train_table)
+        logger.info("%s\n%s", test_title, test_table)
 
-    def tabulate_per_class_metrics(self) -> None:
+    def tabulate_per_class_metrics(self,
+                                   best_epoch: int,
+                                   per_class_metric: List[float],
+                                   col_names: List[str]) -> None:
         """
         Takes a log string and formats it to be printed in a tabular format.
-        """
-        # Read CSV file into a Pandas DataFrame
-        data = pd.read_csv(str(self.per_class_metric_file_path))
-        best_epoch = self.best_epoch - 1
 
-        bar_graph = {}
+        :param best_epoch: The epoch number of the best model.
+        :type best_epoch: int
+        :param per_class_metric: The per class metrics to be formatted.
+        :type per_class_metric: List[float]
+        :param col_names: The column names for the per class metrics.
+        :type col_names: List[str]
+        :return: None
+        """
+        # Add best epoch to the per class metrics list
+        per_class_metric = [best_epoch] + per_class_metric
+
+        # Elements to remove
+        elements_to_remove = ['Num_samples', 'Timestamp', 'Elapsed_time_(s)']
+
+        # Remove specified elements from the list
+        col_names = [col for col in col_names if col not in elements_to_remove]
+
+        data = pd.DataFrame([per_class_metric], columns=col_names)
+
+        metrics_by_class = {}
 
         # Iterate through the header
         for column_name in data.columns:
-            value = data.loc[best_epoch, column_name]
+            value = data.loc[best_epoch - 1, column_name]
             if isinstance(value, (int, float)):
-                rounded_value = round(value, 2)
+                rounded_value = f"{round(value, 1):.2f}"
                 if column_name.startswith('Precision_'):
-                    bar_graph[str(column_name[len('Precision_'):])] = [rounded_value]
+                    metrics_by_class[str(column_name[len('Precision_'):])] = [rounded_value]
                 elif column_name.startswith('Recall_'):
-                    bar_graph[str(column_name[len('Recall_'):])].append(rounded_value)
+                    key = str(column_name[len('Recall_'):])
+                    metrics_by_class.setdefault(key, []).append(rounded_value)
                 elif column_name.startswith('Dice_'):
-                    bar_graph[str(column_name[len('Dice_'):])].append(rounded_value)
+                    key = str(column_name[len('Dice_'):])
+                    metrics_by_class.setdefault(key, []).append(rounded_value)
                 elif column_name.startswith('IoU_'):
-                    bar_graph[str(column_name[len('IoU_'):])].append(rounded_value)
+                    key = str(column_name[len('IoU_'):])
+                    metrics_by_class.setdefault(key, []).append(rounded_value)
 
         table = PrettyTable()
         table.field_names = ['Class', 'Precision', 'Recall', 'Dice', 'IoU']
 
-        for key, values in bar_graph.items():
+        for key, values in metrics_by_class.items():
             table.add_row([key] + values)
 
         title = "Per-class metrics:"
-        width = max(len(title), len(table.get_string().split('\n', 1)[0]))
-        logger.info("\n\n%s\n%s", title.center(width), table)
+        logger.info("%s\n%s", title, table)
