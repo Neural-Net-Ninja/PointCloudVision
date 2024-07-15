@@ -36,6 +36,7 @@ def get_logger():
 # some_other_file.py
 from logger_config import get_logger
 
+
 logging = get_logger()
 
 logging.debug('This is a debug message in green color!')

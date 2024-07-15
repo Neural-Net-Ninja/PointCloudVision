@@ -8,14 +8,14 @@ def copy_unpredicted_files(source_folder, predicted_folder, destination_folder):
     # Ensure the destination folder exists
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder)
-    
+
     # Get the base names (without extensions) of files in the source and predicted folders
     source_files = get_file_names_without_extension(source_folder)
     predicted_files = get_file_names_without_extension(predicted_folder)
-    
+
     # Determine the base names of files that have not been predicted yet
     unpredicted_files = source_files - predicted_files
-    
+
     # Copy unpredicted files to the destination folder
     for file_name in os.listdir(source_folder):
         base_name = os.path.splitext(file_name)[0]
