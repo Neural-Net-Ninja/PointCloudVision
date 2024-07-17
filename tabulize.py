@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List
+from typing import List, Dict, Union
 
 import pandas as pd
 from prettytable import PrettyTable
@@ -14,7 +14,7 @@ if not logger.handlers:
     logger.addHandler(logging.StreamHandler())
 
 
-class MetricTabulator:
+class MetricTabulator(object):
     """
     This class is responsible for processing and formatting metrics from log files. It provides methods to:
 
@@ -164,3 +164,52 @@ class MetricTabulator:
 
         title = "Per-class metrics:"
         logger.info("%s\n%s", title, table)
+
+    def tabulate_metrics(self,
+                         metrics_dict: Dict[str, Union[float, int]]) -> tuple[PrettyTable, PrettyTable]:
+        """
+        Takes a dictionary of metrics and formats it to be printed in a tabular format.
+
+        :param log_dict: The dictionary of metrics to be formatted.
+        :type log_dict: dict
+        :return: None
+        """
+        # Field names to extract
+        field_names = ["Epoch", "Loss", "Accuracy", "mPrecision", "mRecall", "mDice", "mIoU"]
+
+        # Extracted dictionary
+        extracted_dict = {key: metrics_dict[key] for key in field_names}
+
+        # Create a PrettyTable object
+        metric_table = PrettyTable()
+        metric_table.field_names = field_names
+
+        # Add the values as a single row to the table
+        metric_table.add_row([extracted_dict[key] for key in field_names])
+
+        # Initialize an empty dictionary to store the extracted data
+        extracted_data: Dict[str, Dict[str, str]] = {}
+
+        # Iterate over the items in the metrics_dict
+        for key, value in metrics_dict.items():
+            if any(prefix in key for prefix in ['Precision_', 'Recall_', 'Dice_', 'IoU_']):
+                metric, class_id = key.split('_', 1)
+                if class_id not in extracted_data:
+                    extracted_data[class_id] = {}
+                extracted_data[class_id][metric] = "{:.2f}".format(value)
+
+        # Create a PrettyTable object and set the field names
+        per_class_metric_table = PrettyTable()
+        per_class_metric_table.field_names = ['Class', 'Precision', 'Recall', 'Dice', 'IoU']
+
+        # Populate the table with the data from the extracted_data dictionary
+        for class_id, metrics in extracted_data.items():
+            per_class_metric_table.add_row([
+                class_id,
+                metrics.get('Precision', 'N/A'),
+                metrics.get('Recall', 'N/A'),
+                metrics.get('Dice', 'N/A'),
+                metrics.get('IoU', 'N/A')
+            ])
+
+        return metric_table, per_class_metric_table
