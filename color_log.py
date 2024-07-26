@@ -1,6 +1,7 @@
 import logging
 import colorlog
 
+
 def get_logger(name: str = __name__, level: int = logging.DEBUG) -> logging.Logger:
     """
     Creates and configures a logger with colored output.
