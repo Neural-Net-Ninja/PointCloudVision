@@ -170,9 +170,10 @@ class MetricTabulator(object):
         """
         Takes a dictionary of metrics and formats it to be printed in a tabular format.
 
-        :param log_dict: The dictionary of metrics to be formatted.
-        :type log_dict: dict
-        :return: None
+        :param metrics_dict: The dictionary of metrics to be formatted.
+        :type metrics_dict: Dict[str, Union[float, int]]
+        :return: A tuple containing two PrettyTable objects: one for overall metrics and one for per-class metrics.
+        :rtype: tuple[PrettyTable, PrettyTable]
         """
         # Field names to extract
         field_names = ["Epoch", "Loss", "Accuracy", "mPrecision", "mRecall", "mDice", "mIoU"]
