@@ -1,19 +1,26 @@
-# logger_config.py
 import logging
 import colorlog
 
-def get_logger():
-    # create logger
-    logger = logging.getLogger(__name__)
+def get_logger(name: str = __name__, level: int = logging.DEBUG) -> logging.Logger:
+    """
+    Creates and configures a logger with colored output.
 
-    # set log level
-    logger.setLevel(logging.DEBUG)
+    :param name: The name of the logger. Defaults to the module's name.
+    :type name: str
+    :param level: The logging level. Defaults to logging.DEBUG.
+    :type level: int
+    :return: Configured logger instance.
+    :rtype: logging.Logger
+    """
+    # Create logger
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
 
-    # create console handler and set level to debug
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
+    # Create console handler and set level
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
 
-    # create formatter with color scheme
+    # Create formatter with color scheme
     formatter = colorlog.ColoredFormatter(
         '%(log_color)s%(levelname)s:%(message)s',
         log_colors={
@@ -25,18 +32,15 @@ def get_logger():
         }
     )
 
-    # add formatter to console handler
-    ch.setFormatter(formatter)
+    # Add formatter to console handler
+    console_handler.setFormatter(formatter)
 
-    # add console handler to logger
-    logger.addHandler(ch)
+    # Add console handler to logger
+    logger.addHandler(console_handler)
 
     return logger
 
-# some_other_file.py
-from logger_config import get_logger
-
-
-logging = get_logger()
-
-logging.debug('This is a debug message in green color!')
+# Usage example in some_other_file.py
+if __name__ == "__main__":
+    logger = get_logger()
+    logger.debug('This is a debug message in green color!')
