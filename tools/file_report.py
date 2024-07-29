@@ -15,15 +15,16 @@ def generate_tree(directory, prefix=''):
     tree = []
     contents = sorted(os.listdir(directory))
     pointers = ['├── '] * (len(contents) - 1) + ['└── ']
-    
+
     for pointer, content in zip(pointers, contents):
         path = os.path.join(directory, content)
         tree.append(prefix + pointer + content)
         if os.path.isdir(path):
             extension = '│   ' if pointer == '├── ' else '    '
             tree.extend(generate_tree(path, prefix + extension))
-    
+
     return tree
+
 
 def count_files_by_extension(directory):
     """
@@ -35,13 +36,14 @@ def count_files_by_extension(directory):
     :rtype: dict
     """
     extension_count = defaultdict(int)
-    
+
     for root, _, files in os.walk(directory):
         for file in files:
             extension = os.path.splitext(file)[1]
             extension_count[extension] += 1
-    
+
     return extension_count
+
 
 def generate_report(directory):
     """
@@ -54,14 +56,14 @@ def generate_report(directory):
     """
     tree = generate_tree(directory)
     extension_count = count_files_by_extension(directory)
-    
+
     report = []
     report.append("Directory Tree:")
     report.extend(tree)
     report.append("\nFile Counts by Extension:")
     for ext, count in extension_count.items():
         report.append(f"{ext}: {count}")
-    
+
     return "\n".join(report)
 
 if __name__ == "__main__":
