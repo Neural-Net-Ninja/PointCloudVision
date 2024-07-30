@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 
+
 def generate_tree(directory, prefix=''):
     """
     Generates a tree structure of the given directory.
