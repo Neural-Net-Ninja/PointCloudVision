@@ -214,3 +214,43 @@ class MetricTabulator(object):
             ])
 
         return metric_table, per_class_metric_table
+    
+    def tabulate_metrics(self, metrics_dict: Dict[str, Union[float, int]]) -> tuple[PrettyTable, PrettyTable]:
+    """
+    Takes a dictionary of metrics and formats it to be printed in a tabular format.
+
+    :param metrics_dict: The dictionary of metrics to be formatted.
+    :type metrics_dict: Dict[str, Union[float, int]]
+    :return: A tuple containing two PrettyTable objects: one for overall metrics and one for per-class metrics.
+    :rtype: tuple[PrettyTable, PrettyTable]
+    """
+    # Extract overall metric names (those without underscores)
+    overall_metrics = {key: value for key, value in metrics_dict.items() if '_' not in key}
+
+    # Create a PrettyTable object for overall metrics
+    overall_metric_table = PrettyTable()
+    overall_metric_table.field_names = list(overall_metrics.keys())
+
+    # Add the values as a single row to the table
+    overall_metric_table.add_row(list(overall_metrics.values()))
+
+    # Initialize an empty dictionary to store the extracted data for per-class metrics
+    extracted_data: Dict[str, Dict[str, str]] = {}
+
+    # Iterate over the items in the metrics_dict to extract per-class metrics
+    for key, value in metrics_dict.items():
+        if '_' in key:
+            metric, class_id = key.split('_', 1)
+            if class_id not in extracted_data:
+                extracted_data[class_id] = {}
+            extracted_data[class_id][metric] = "{:.2f}".format(value)
+
+    # Create a PrettyTable object for per-class metrics
+    per_class_metric_table = PrettyTable()
+    per_class_metric_table.field_names = ['Class'] + list(next(iter(extracted_data.values())).keys())
+
+    # Populate the table with the data from the extracted_data dictionary
+    for class_id, metrics in extracted_data.items():
+        per_class_metric_table.add_row([class_id] + [metrics.get(metric, 'N/A') for metric in per_class_metric_table.field_names[1:]])
+
+    return overall_metric_table, per_class_metric_table
