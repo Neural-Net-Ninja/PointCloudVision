@@ -27,9 +27,9 @@ def copy_unpredicted_files(source_folder, predicted_folder, destination_folder):
 
 
 # Define the paths to your folders
-folder_a = r'K:\Spie\Paket_4\ML_paket_4\01_preprocessed\02_predict\L419'
-folder_b = r'K:\Spie\Paket_4\ML_paket_4\02_output\L419'
-folder_c = r'K:\Spie\Paket_4\ML_paket_4\01_preprocessed\02_predict\un_L419'
+folder_a = r'K:\Spie\Spie_files\paket_6\L513'
+folder_b = r'K:\Spie\Spie_files\PCT_spie_files\paket_6\L513'
+folder_c = r'K:\Spie\Spie_files\Spie_ML\02_output'
 
 # Copy the unpredicted files
 copy_unpredicted_files(folder_a, folder_b, folder_c)

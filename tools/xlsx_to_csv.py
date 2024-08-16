@@ -25,7 +25,7 @@ def convert_xlsx_to_csv(input_dir, output_dir):
             print(f"Converted {filename} to {csv_filename}")
 
 
-# Example usage
+# store in PCT folder
 input_directory = r'K:\Fruit_detection\10687819'
 output_directory = r'K:\Fruit_detection\PCT'
 convert_xlsx_to_csv(input_directory, output_directory)
