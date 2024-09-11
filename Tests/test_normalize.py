@@ -103,3 +103,52 @@ if __name__ == "__main__":
         print("\nDenormalization successful, values match.")
     else:
         print("\nDenormalization failed, values do not match.")
+        
+        
+        
+import pandas as pd
+from typing import Dict, Union
+
+def remap_normalized_values(dataset: pd.DataFrame, min_values: Dict[str, Union[int, float]],
+                            max_values: Dict[str, Union[int, float]],
+                            precision_mapping: Dict[str, Union[int, float]]) -> pd.DataFrame:
+    """Reads the given metadata and remaps the normalized (0-1) values (e.g. intensity) to their original range using
+    the min/max values saved in the metadata.
+
+    :param dataset: point cloud
+    :type dataset: pandas.DataFrame
+    :param min_values: minimum values of columns before processing point cloud
+    :type min_values: dict
+    :param max_values: maximum values of columns before processing point cloud
+    :type max_values: dict
+    :param precision_mapping: mapping of attributes to their desired precision (int or float with decimal places)
+    :type precision_mapping: dict
+    :return: point cloud without any normalized values
+    :rtype: pandas.DataFrame
+    """
+    assert min_values.keys() == max_values.keys(), "This needs to be the case or the values are broken."
+    for key in min_values:
+        if key in dataset:
+            min_value = min_values[key]
+            max_value = max_values[key]
+            precision = precision_mapping.get(key, 9)  # Default to 9 decimal places if not specified
+
+            if isinstance(precision, int) and precision == 0:
+                # Round to integer
+                dataset[key] = dataset[key].map(lambda val: round(val * (max_value - min_value) + min_value))
+            else:
+                # Round to specified number of decimal places
+                dataset[key] = dataset[key].map(lambda val: round(val * (max_value - min_value) + min_value, precision))
+    return dataset
+
+# Example usage
+dataset = pd.DataFrame({
+    'intensity': [0.1, 0.5, 0.9],
+    'distancetodtm': [0.1, 0.5, 0.9]
+})
+min_values = {'intensity': 0, 'distancetodtm': 0}
+max_values = {'intensity': 100, 'distancetodtm': 1}
+precision_mapping = {'intensity': 0, 'distancetodtm': 6}  # 'intensity' as int, 'distancetodtm' as float with 6 decimals
+
+remapped_dataset = remap_normalized_values(dataset, min_values, max_values, precision_mapping)
+print(remapped_dataset)
