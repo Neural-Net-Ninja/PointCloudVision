@@ -1,5 +1,8 @@
 import pandas as pd
 from typing import Dict, Union
+import unittest
+import numpy as np
+from remap import remap_normalized_values
 
 def normalize_dataset(dataset: pd.DataFrame,
                       min_values: Dict[str, float],
@@ -103,3 +106,44 @@ if __name__ == "__main__":
         print("\nDenormalization successful, values match.")
     else:
         print("\nDenormalization failed, values do not match.")
+
+# test_remap.py
+
+
+class TestRemapNormalizedValues(unittest.TestCase):
+
+    def setUp(self):
+        # Example dataset
+        self.data = {
+            'intensity': [0.1, 0.5, 0.9],
+            'height': [0.2, 0.6, 1.0]
+        }
+        self.dataset = pd.DataFrame(self.data)
+
+        # Example min, max values and data types
+        self.min_values = {'intensity': 0, 'height': 0}
+        self.max_values = {'intensity': 100, 'height': 10}
+        self.data_types = {'intensity': 'int', 'height': 'float32'}  # Note the use of a NumPy type
+
+    def test_remap_normalized_values(self):
+        # Remap normalized values
+        remapped_dataset = remap_normalized_values(self.dataset, self.min_values, self.max_values, self.data_types)
+
+        # Expected results
+        expected_data = {
+            'intensity': [10, 50, 90],
+            'height': [2.0, 6.0, 10.0]
+        }
+        expected_dataset = pd.DataFrame(expected_data)
+
+        # Check if the remapped dataset matches the expected dataset
+        pd.testing.assert_frame_equal(remapped_dataset, expected_dataset)
+
+    def test_dtype_conversion(self):
+        # Test dtype conversion directly
+        for key in self.min_values:
+            dtype = getattr(np, self.data_types[key])
+            self.assertTrue(callable(dtype), f"{self.data_types[key]} should be a callable type")
+
+if __name__ == '__main__':
+    unittest.main()
