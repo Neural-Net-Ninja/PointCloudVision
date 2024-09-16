@@ -142,3 +142,21 @@ precision_mapping = {'intensity': 0, 'distancetodtm': 6}  # 'intensity' as int, 
 
 remapped_dataset = remap_normalized_values(dataset, min_values, max_values, precision_mapping)
 print(remapped_dataset)
+
+    def test_remap_normalized_values(self):
+        dataset = pd.DataFrame({
+            'intensity': [0.0, 0.5, 1.0],
+            'distancetodtm': [0.0, 0.5, 1.0]
+        })
+        min_values = {'intensity': 10, 'distancetodtm': 100}
+        max_values = {'intensity': 20, 'distancetodtm': 200}
+        data_types = {'intensity': 'int32', 'distancetodtm': 'float64'}
+
+        expected_dataset = pd.DataFrame({
+            'intensity': [10, 15, 20],
+            'distancetodtm': [100.0, 150.0, 200.0]
+        })
+
+        expected_dataset = expected_dataset.astype(data_types)
+        result = io_utils.remap_normalized_values(dataset, min_values, max_values, data_types)
+        self.assertEqual(result.to_dict(), expected_dataset.to_dict())
