@@ -159,4 +159,35 @@ print(remapped_dataset)
 
         expected_dataset = expected_dataset.astype(data_types)
         result = io_utils.remap_normalized_values(dataset, min_values, max_values, data_types)
-        self.assertEqual(result.to_dict(), expected_dataset.to_dict())
+        self.assertEqual(result.to_dict(), expected_dataset.to_dict())        
+
+   for result in results:
+        if isinstance(result, dict):
+            for category, min_value in result.get('min_values', {}).items():
+                if category not in min_values:
+                    min_values[category] = min_value
+                else:
+                    min_values[category] = min(min_values[category], min_value)
+
+            for category, max_value in result.get('max_values', {}).items():
+                if category not in max_values:
+                    max_values[category] = max_value
+                else:
+                    max_values[category] = max(max_values[category], max_value)
+
+            for category, value_count in result.get('value_counts', {}).items():
+                if category in value_counts:
+                    value_counts[category] += value_count
+                else:
+                    value_counts[category] = value_count
+
+            if len(known_columns) == 0:
+                known_columns |= result.get('known_columns', set())
+
+            for category, dtype in result.get('data_types', {}).items():
+                if category not in data_types:
+                    data_types[category] = dtype
+                elif data_types[category] != dtype:
+                    logging.warning(
+                        f"Data type mismatch for column {category}: Upcasting {data_types[category]} to {dtype}")
+                    data_types[category] = dtype
