@@ -25,3 +25,12 @@ def get_max_dtype(dtype1: np.dtype, dtype2: Any) -> np.dtype:
     priority2 = dtype_hierarchy.get(dtype2, 0)
 
     return dtype1 if priority1 >= priority2 else dtype2
+
+
+def test_get_max_dtype(self):
+    """Tests `get_max_dtype` method. Returns the dtype with the highest priority."""
+    self.assertEqual(get_max_dtype(np.dtype('int32'), np.dtype('int64')), np.dtype('int64'))
+    self.assertEqual(get_max_dtype(np.dtype('float32'), np.dtype('int32')), np.dtype('float32'))
+    self.assertEqual(get_max_dtype(np.dtype('float64'), np.dtype('float32')), np.dtype('float64'))
+    self.assertEqual(get_max_dtype(np.dtype('object'), np.dtype('float64')), np.dtype('object'))
+    self.assertEqual(get_max_dtype(np.dtype('int32'), np.dtype('int32')), np.dtype('int32'))
