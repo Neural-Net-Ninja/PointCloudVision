@@ -22,17 +22,12 @@ class MetricTabulator(object):
         # Extract overall metric keys (those without a class suffix)
         overall_metric_keys = [key for key in metrics_dict.keys() if '_' not in key]
 
-        # Create a PrettyTable object for overall metrics
         overall_metric_table = PrettyTable()
         overall_metric_table.field_names = overall_metric_keys
-
-        # Add the values as a single row to the overall metric table
         overall_metric_table.add_row([metrics_dict[key] for key in overall_metric_keys])
 
-        # Initialize an empty dictionary to store the extracted per-class data
         extracted_data: Dict[str, Dict[str, str]] = {}
 
-        # Iterate over the items in the metrics_dict to extract per-class metrics
         for key, value in metrics_dict.items():
             if '_' in key:
                 metric, class_id = key.split('_', 1)
@@ -40,14 +35,11 @@ class MetricTabulator(object):
                     extracted_data[class_id] = {}
                 extracted_data[class_id][metric] = str(value)
 
-        # Determine the per-class metric keys
         per_class_metric_keys = ['Class'] + list(next(iter(extracted_data.values())).keys())
 
-        # Create a PrettyTable object for per-class metrics
         per_class_metric_table = PrettyTable()
         per_class_metric_table.field_names = per_class_metric_keys
 
-        # Populate the per-class metric table with the data from the extracted_data dictionary
         for class_id, metrics in extracted_data.items():
             per_class_metric_table.add_row([
                 class_id,
