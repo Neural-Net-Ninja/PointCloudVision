@@ -2,11 +2,11 @@ from typing import Dict, Union, Tuple
 from prettytable import PrettyTable
 
 
-class MetricTabulator(object):
+class MetricTableGenerator(object):
     """
-    This class processes and formats metrics from log files. It formats these metrics into a tabular format for easy
-    logging and visualization. Additionally, it tabulates per-class metrics for a specified epoch. This class is useful
-    for analyzing and presenting model performance metrics in a structured and readable manner.
+    This class processes and formats metrics provided as dictionaries. It formats these metrics into a tabular format
+    for easy logging and visualization. Additionally, it tabulates per-class metrics for a specified epoch. This class
+    is used for presenting model performance metrics in a structured and readable manner.
     """
     def tabulate_metrics(self,
                          metrics_dict: Dict[str, Union[float, int]]) -> Tuple[PrettyTable, PrettyTable]:
@@ -19,34 +19,32 @@ class MetricTabulator(object):
             table contains overall metrics and per-class metrics.
         :type: Tuple[PrettyTable, PrettyTable]
         """
-        # Extract overall metric keys (those without a class suffix)
         overall_metric_keys = [key for key in metrics_dict.keys() if '_' not in key]
 
         overall_metric_table = PrettyTable()
         overall_metric_table.field_names = overall_metric_keys
         overall_metric_table.add_row([metrics_dict[key] for key in overall_metric_keys])
 
-        extracted_data: Dict[str, Dict[str, str]] = {}
+        per_class_metrics: Dict[str, Dict[str, str]] = {}
 
         for key, value in metrics_dict.items():
             if '_' in key:
                 metric, class_id = key.split('_', 1)
-                if class_id not in extracted_data:
-                    extracted_data[class_id] = {}
-                extracted_data[class_id][metric] = str(value)
+                if class_id not in per_class_metrics:
+                    per_class_metrics[class_id] = {}
+                per_class_metrics[class_id][metric] = str(value)
 
-        per_class_metric_keys = ['Class'] + list(next(iter(extracted_data.values())).keys())
+        all_metric_keys = set()
+        for metrics in per_class_metrics.values():
+            all_metric_keys.update(metrics.keys())
+
+        per_class_metric_keys = ['Class'] + list(all_metric_keys)
 
         per_class_metric_table = PrettyTable()
         per_class_metric_table.field_names = per_class_metric_keys
 
-        for class_id, metrics in extracted_data.items():
-            per_class_metric_table.add_row([
-                class_id,
-                metrics.get('Precision', 'N/A'),
-                metrics.get('Recall', 'N/A'),
-                metrics.get('Dice', 'N/A'),
-                metrics.get('IoU', 'N/A')
-            ])
+        for class_id, metrics in per_class_metrics.items():
+            row = [class_id] + [metrics.get(key, 'N/A') for key in all_metric_keys]
+            per_class_metric_table.add_row(row)
 
         return overall_metric_table, per_class_metric_table
