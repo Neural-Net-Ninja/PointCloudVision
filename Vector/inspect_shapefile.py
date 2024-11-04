@@ -27,5 +27,5 @@ def inspect_shapefile(file_path):
     print()
 
 if __name__ == "__main__":
-    file_path = r'D:\Vector_analysis_Twin4road\shape_evaluation\extracted\ptv3_run5\arrows\Run 4S2224532_20220905_074227_0004_preprocessed_part0_pfeile.shp'
+    file_path = r'D:\Vector_analysis_Twin4road\shape_evaluation\gt\Run4_L_0_FN_Pfeile_1.shp'
     inspect_shapefile(file_path)
