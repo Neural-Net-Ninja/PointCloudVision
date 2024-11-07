@@ -3,6 +3,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 def visualize_shapefile(file_path):
     gdf = gpd.read_file(file_path)
     gdf.plot()
@@ -10,6 +11,7 @@ def visualize_shapefile(file_path):
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
     plt.show()
+
 
 def analyze_shapefiles(ground_truth_gdf, predicted_gdf):
     ground_truth_gdf['geometry'] = ground_truth_gdf.buffer(0.001)
