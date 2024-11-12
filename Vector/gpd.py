@@ -55,12 +55,8 @@ def analyze_shapefiles(ground_truth_fp_gdf, ground_truth_fn_gdf, predicted_gdf):
 
 ground_truth_folder = r'D:\v2'
 predicted_folder = r'D:\Vector_analysis_Twin4road\shape_evaluation\predict_new'
-output_folder = r'D:\Vector_analysis_Twin4road\shape_evaluation\output'
 
 predicted_files = [f for f in os.listdir(predicted_folder) if f.endswith('.shp')]
-
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
 
 overall_fp_count = 0
 overall_fn_count = 0
