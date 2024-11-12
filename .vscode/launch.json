@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Mini_model",
             "type": "python",
@@ -12,5 +13,13 @@
             "console": "integratedTerminal",
             "purpose": ["debug-test"]
         },
+        {
+            "name": "GPD",
+            "type": "python",
+            "request": "launch",
+            "program": "X:/Neural-Net-Ninja/Vector/gpd.py",
+            "console": "integratedTerminal",
+            "purpose": ["debug-test"]
+        }
     ]
 }
