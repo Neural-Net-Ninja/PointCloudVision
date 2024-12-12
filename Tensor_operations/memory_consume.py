@@ -27,54 +27,58 @@ model = SimpleModel().cuda()
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Example dimensions
-B = 32     # Batch size
-N = 10000  # Number of points
-D = 3      # Number of dimensions
+# Flag to control pre-allocation
+use_preallocation = True
 
-# Memory for points (float32)
-points_memory = B * N * D * 4  # 4 bytes per float32
+if use_preallocation:
+    # Example dimensions
+    B = 32     # Batch size
+    N = 10000  # Number of points
+    D = 3      # Number of dimensions
 
-# Memory for batch_indices (long)
-batch_indices_memory = B * N * 8  # 8 bytes per long
+    # Memory for points (float32)
+    points_memory = B * N * D * 4  # 4 bytes per float32
 
-# Memory for labels (long)
-labels_memory = B * N * 8  # 8 bytes per long
+    # Memory for batch_indices (long)
+    batch_indices_memory = B * N * 8  # 8 bytes per long
 
-# Memory for point_cloud_sizes (long)
-point_cloud_sizes_memory = B * 8  # 8 bytes per long
+    # Memory for labels (long)
+    labels_memory = B * N * 8  # 8 bytes per long
 
-# Total memory for a single batch
-single_batch_memory = points_memory + batch_indices_memory + labels_memory + point_cloud_sizes_memory
+    # Memory for point_cloud_sizes (long)
+    point_cloud_sizes_memory = B * 8  # 8 bytes per long
 
-# Number of batches to pre-allocate for
-num_batches = 10
+    # Total memory for a single batch
+    single_batch_memory = points_memory + batch_indices_memory + labels_memory + point_cloud_sizes_memory
 
-# Total memory requirement
-total_memory = single_batch_memory * num_batches
+    # Number of batches to pre-allocate for
+    num_batches = 10
 
-# Add memory for model parameters (example: 500 MB)
-model_memory = 500 * 1024 * 1024
+    # Total memory requirement
+    total_memory = single_batch_memory * num_batches
 
-# Total memory including model parameters
-total_memory += model_memory
+    # Add memory for model parameters (example: 500 MB)
+    model_memory = 500 * 1024 * 1024
 
-# Calculate the number of elements needed
-num_elements = total_memory // 4  # 4 bytes per float32
+    # Total memory including model parameters
+    total_memory += model_memory
 
-# Memory profiling before pre-allocation
-mem_before_prealloc = torch.cuda.memory_allocated()
+    # Calculate the number of elements needed
+    num_elements = total_memory // 4  # 4 bytes per float32
 
-# Create a tensor with the calculated number of elements
-pre_alloc_tensor = torch.empty((num_elements,), device='cuda')
-del pre_alloc_tensor
-torch.cuda.empty_cache()
+    # Memory profiling before pre-allocation
+    mem_before_prealloc = torch.cuda.memory_allocated()
 
-# Memory profiling after pre-allocation
-mem_after_prealloc = torch.cuda.memory_allocated()
-mem_consumed_prealloc = mem_after_prealloc - mem_before_prealloc
+    # Create a tensor with the calculated number of elements
+    pre_alloc_tensor = torch.empty((num_elements,), device='cuda')
+    del pre_alloc_tensor
+    torch.cuda.empty_cache()
 
-print(f'Memory Consumed by Pre-allocation: {mem_consumed_prealloc / 1024 ** 2:.2f} MB')
+    # Memory profiling after pre-allocation
+    mem_after_prealloc = torch.cuda.memory_allocated()
+    mem_consumed_prealloc = mem_after_prealloc - mem_before_prealloc
+
+    print(f'Memory Consumed by Pre-allocation: {mem_consumed_prealloc / 1024 ** 2:.2f} MB')
 
 # Training loop with memory profiling
 num_epochs = 5
