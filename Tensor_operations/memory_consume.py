@@ -115,3 +115,16 @@ for epoch in range(num_epochs):
     print(f'Epoch [{epoch+1}/{num_epochs}] completed in {end_time - start_time:.2f} seconds')
 
 print("Training completed.")
+
+# condion for accessing the training files and getting max number of points that will be used in single batch
+for iterate, batch in enumerate(train_loader):
+    batch['points'] = batch['points'].to(globals.torch_device)
+    batch['is_duplicate'] = batch['is_duplicate'].reshape(-1).to(globals.torch_device)
+    batch['is_not_duplicate'] = torch.logical_not(batch['is_duplicate'])
+    # keep the maximum batch['points'].size(0) among all batcche, give variable name max_points_size
+    points, batch_indices, point_cloud_sizes = self.fixed_size_to_variable_size_batch(
+                            points, batch['is_not_duplicate']
+    if iterate == 0:
+        max_points_size = points.size(0)
+    else:
+        max_points_size = max(max_points_size, points.size(0))
