@@ -1,145 +1,88 @@
+__all__ = ['TverskyLoss']
+
+from typing import Optional
+
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
-class TverskyLoss(nn.Module):
-    def __init__(self, alpha=0.5, beta=0.5, smooth=1.0, reduction='mean', class_weights=None, dynamic_focus=False):
-        """
-        Enhanced Tversky Loss with class weights, logging, and dynamic focus.
+from .base_loss import SegmentationLoss
 
-        :param alpha: Controls the penalty for false positives.
-        :param beta: Controls the penalty for false negatives.
-        :param smooth: Smoothing factor to avoid division by zero.
-        :param reduction: Specifies the reduction to apply to the output: 'none' | 'mean' | 'sum'
-        :param class_weights: Optional tensor of weights for each class.
-        :param dynamic_focus: If True, adjusts alpha and beta dynamically based on epoch performance.
-        """
-        super(TverskyLoss, self).__init__()
+
+class TverskyLoss(SegmentationLoss):
+    """
+    Tversky loss function for imbalanced datasets.
+
+    :param apply_softmax: Whether the predictions passed to the loss function are logits that need to be converted to
+        probabilities by applying Softmax activation function. Defaults to `True`.
+    :type apply_softmax: bool, optional
+    :param ignore_index: Specifies a target value that is ignored and does not contribute to the input gradient.
+    :type ignore_index: int, optional
+    :param epsilon: Smoothing factor to avoid division by zero. Defaults to 1.0.
+    :type epsilon: float, optional
+    :param alpha: Weight for false positives. Defaults to 0.5.
+    :type alpha: float, optional
+    :param beta: Weight for false negatives. Defaults to 0.5.
+    :type beta: float, optional
+    :param reduction: Specifies the reduction to apply to the output: `"none"` | `"mean"` | `"sum"`.
+        Defaults to `"mean"`.
+    :type reduction: str, optional
+    """
+
+    def __init__(self,
+                 apply_softmax: bool = True,
+                 ignore_index: int = 255,
+                 epsilon: float = 1.0,
+                 alpha: float = 0.5,
+                 beta: float = 0.5,
+                 reduction: str = "mean",
+                 label_smoothing: Optional[float] = None):
+        super().__init__(apply_softmax=apply_softmax, label_smoothing=label_smoothing, reduction=reduction)
+        self.ignore_index = ignore_index
+        self.epsilon = epsilon
         self.alpha = alpha
         self.beta = beta
-        self.smooth = smooth
-        self.reduction = reduction
-        self.class_weights = class_weights
-        self.dynamic_focus = dynamic_focus
-        self.logger = logging.getLogger('TverskyLoss')
-        self.epoch = 0  # Track the current epoch for dynamic adjustments
 
-    def setUp(self):
-        self.inputs = torch.tensor([[[[0.7, 0.2], [0.4, 0.6]]]], dtype=torch.float32)
-        self.targets = torch.tensor([[[[1, 0], [1, 1]]]], dtype=torch.long)
-        self.epsilon = 1e-5  # Small value to account for floating-point arithmetic errors
-
-    def test_initialization(self):
-        loss = TverskyLoss()
-        self.assertEqual(loss.alpha, 0.5)
-        self.assertEqual(loss.beta, 0.5)
-        self.assertEqual(loss.smooth, 1.0)
-        self.assertEqual(loss.reduction, 'mean')
-        self.assertIsNone(loss.class_weights)
-        self.assertFalse(loss.dynamic_focus)
-
-    def test_forward_pass(self):
-        loss = TverskyLoss()
-        result = loss(self.inputs, self.targets)
-        self.assertTrue(torch.is_tensor(result))
-        self.assertGreater(result.item(), 0)
-
-    def test_class_weights(self):
-        class_weights = torch.tensor([0.5, 2.0])
-        loss = TverskyLoss(class_weights=class_weights)
-        result_with_weights = loss(self.inputs, self.targets)
-        result_without_weights = TverskyLoss()(self.inputs, self.targets)
-        self.assertNotEqual(result_with_weights.item(), result_without_weights.item())
-
-    def test_dynamic_focus(self):
-        loss = TverskyLoss(dynamic_focus=True)
-        initial_alpha = loss.alpha
-        initial_beta = loss.beta
-        loss(self.inputs, self.targets)  # Trigger dynamic focus adjustment
-        self.assertNotEqual(initial_alpha, loss.alpha)
-        self.assertNotEqual(initial_beta, loss.beta)
-
-    def test_adjust_focus_increase_alpha(self):
-        loss = TverskyLoss(dynamic_focus=True)
-        # Simulate a case where precision is lower than recall
-        loss.adjust_focus(TP=50, FP=100, FN=30)
-        self.assertLess(loss.alpha, 0.5)
-        self.assertGreater(loss.beta, 0.5)
-
-    def test_adjust_focus_increase_beta(self):
-        loss = TverskyLoss(dynamic_focus=True)
-        # Simulate a case where recall is lower than precision
-        loss.adjust_focus(TP=50, FP=30, FN=100)
-        self.assertGreater(loss.alpha, 0.5)
-        self.assertLess(loss.beta, 0.5)
-
-    @patch('Tversky_loss.logging')
-    def test_logging(self, mock_logging):
-        loss = TverskyLoss()
-        loss.forward(self.inputs, self.targets)
-        mock_logging.getLogger.assert_called_with('TverskyLoss')
-        mock_logging.getLogger('TverskyLoss').info.assert_called()
-
-    def forward(self, inputs, targets):
+    def forward(self,
+                input: torch.Tensor,
+                target: torch.Tensor,
+                point_weight: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
-        Forward pass of the Tversky loss function.
+        Computes Tversky loss.
 
-        Parameters:
-        - inputs (Tensor): Predicted probabilities for each class.
-        - targets (Tensor): Ground truth labels.
-
-        Returns:
-        - loss (Tensor): Computed Tversky loss.
+        :param input: The prediction tensor. Must have shape :math:`(N, C)` where `N = number of points`, and
+            `C = number of classes`.
+        :type input: torch.Tensor
+        :param target: The target tensor. Must have shape :math:`(N)` where each element is a class index of integer
+            type (label encoding).
+        :type target: torch.Tensor
+        :param point_weight: Manual rescaling weight given to each point. Must have shape :math:`(N)` where
+            `N = number of points`. Defaults to `None`, which means that the point-wise losses are not rescaled.
+        :type point_weight: torch.Tensor, optional
+        :return: Scalar loss value.
+        :rtype: torch.Tensor
         """
-        targets_one_hot = F.one_hot(targets, num_classes=inputs.shape[1]).permute(0, 3, 1, 2).float()
+        input, target = self.flatten(input, target, self.ignore_index)
+        if self.apply_softmax:
+            input = F.softmax(input, dim=1)
+        target = self.smooth_label(target, input.size(1))
+        num_classes = input.size(1)
+        losses = []
 
-        if self.class_weights is not None:
-            targets_one_hot = targets_one_hot * self.class_weights.view(1, -1, 1, 1)
+        for c in range(num_classes):
+            target_c = (target == c).float()
+            input_c = input[:, c]
 
-        inputs_flat = inputs.view(-1)
-        targets_flat = targets_one_hot.view(-1)
+            t_p = (input_c * target_c).sum()
+            f_p = ((1 - target_c) * input_c).sum()
+            f_n = (target_c * (1 - input_c)).sum()
+            tversky = (t_p + self.epsilon) / (t_p + self.alpha * f_p + self.beta * f_n + self.epsilon)
 
-        TP = (inputs_flat * targets_flat).sum()
-        FP = ((1 - targets_flat) * inputs_flat).sum()
-        FN = (targets_flat * (1 - inputs_flat)).sum()
+            losses.append(1 - tversky)
 
-        Tversky = (TP + self.smooth) / (TP + self.alpha * FP + self.beta * FN + self.smooth)
-        loss = 1 - Tversky
+        losses = torch.stack(losses)
+        loss = losses.mean()
 
-        if self.dynamic_focus:
-            self.adjust_focus(TP, FP, FN)
+        if point_weight is not None:
+            loss = point_weight * loss
 
-        if self.reduction == 'mean':
-            loss = loss.mean()
-        elif self.reduction == 'sum':
-            loss = loss.sum()
-
-        self.logger.info(f'Epoch {self.epoch}: Tversky Loss = {loss.item()}')
-        return loss
-
-    def adjust_focus(self, TP, FP, FN):
-        """
-        Dynamically adjusts alpha and beta based on the performance of the last epoch.
-
-        Parameters:
-        - TP (float): True positives.
-        - FP (float): False positives.
-        - FN (float): False negatives.
-
-        Returns:
-        - None
-        """
-        if TP + FP == 0 or TP + FN == 0:  # Avoid division by zero
-            return
-        precision = TP / (TP + FP)
-        recall = TP / (TP + FN)
-        if precision < recall:
-            self.alpha *= 0.95
-            self.beta *= 1.05
-        else:
-            self.alpha *= 1.05
-            self.beta *= 0.95
-        self.alpha = max(min(self.alpha, 0.9), 0.1)
-        self.beta = max(min(self.beta, 0.9), 0.1)
-        self.epoch += 1
-        self.logger.info(f'Adjusted alpha to {self.alpha}, beta to {self.beta} for epoch {self.epoch}')
+        return self._reduce_loss(loss)
