@@ -1,6 +1,6 @@
 __all__ = ['TverskyLoss']
 
-from typing import Optional
+from typing import Optional, Literal
 
 import torch
 import torch.nn.functional as F
@@ -34,24 +34,26 @@ class TverskyLoss(SegmentationLoss):
                  epsilon: float = 1.0,
                  alpha: float = 0.5,
                  beta: float = 0.5,
-                 reduction: str = "mean",
-                 label_smoothing: Optional[float] = None):
+                 reduction: Literal["mean", "sum", "none"] = "mean",
+                 weight: Optional[torch.Tensor] = None,
+                 label_smoothing: float = 0.0):
         super().__init__(apply_softmax=apply_softmax, label_smoothing=label_smoothing, reduction=reduction)
         self.ignore_index = ignore_index
         self.epsilon = epsilon
         self.alpha = alpha
         self.beta = beta
+        self.weight = weight
 
     def forward(self,
-                input: torch.Tensor,
+                prediction: torch.Tensor,
                 target: torch.Tensor,
                 point_weight: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         Computes Tversky loss.
 
-        :param input: The prediction tensor. Must have shape :math:`(N, C)` where `N = number of points`, and
+        :param prediction: The prediction tensor. Must have shape :math:`(N, C)` where `N = number of points`, and
             `C = number of classes`.
-        :type input: torch.Tensor
+        :type prediction: torch.Tensor
         :param target: The target tensor. Must have shape :math:`(N)` where each element is a class index of integer
             type (label encoding).
         :type target: torch.Tensor
@@ -61,28 +63,33 @@ class TverskyLoss(SegmentationLoss):
         :return: Scalar loss value.
         :rtype: torch.Tensor
         """
-        input, target = self.flatten(input, target, self.ignore_index)
         if self.apply_softmax:
-            input = F.softmax(input, dim=1)
-        target = self.smooth_label(target, input.size(1))
-        num_classes = input.size(1)
+            prediction = F.softmax(prediction, dim=1)
+
+        num_classes = prediction.size(1)
+        one_hot_target = self.smooth_label(target, num_classes)
+        valid_mask = (target != self.ignore_index).float()
+
         losses = []
-
         for c in range(num_classes):
-            target_c = (target == c).float()
-            input_c = input[:, c]
+            if c == self.ignore_index:
+                continue
+            pred_c = prediction[:, c]
+            target_c = one_hot_target[:, c]
+            tp = torch.sum(pred_c * target_c * valid_mask)
+            fp = torch.sum(pred_c * (1 - target_c) * valid_mask)
+            fn = torch.sum((1 - pred_c) * target_c * valid_mask)
+            tversky_index = (tp + self.epsilon) / (tp + self.alpha * fp + self.beta * fn + self.epsilon)
+            loss = 1 - tversky_index
 
-            t_p = (input_c * target_c).sum()
-            f_p = ((1 - target_c) * input_c).sum()
-            f_n = (target_c * (1 - input_c)).sum()
-            tversky = (t_p + self.epsilon) / (t_p + self.alpha * f_p + self.beta * f_n + self.epsilon)
+            if self.weight is not None:
+                loss *= self.weight[c]
 
-            losses.append(1 - tversky)
+            losses.append(loss)
 
-        losses = torch.stack(losses)
-        loss = losses.mean()
+        loss = torch.stack(losses)
 
         if point_weight is not None:
-            loss = point_weight * loss
+            loss = loss * point_weight
 
         return self._reduce_loss(loss)
