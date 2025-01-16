@@ -32,8 +32,8 @@ class TverskyLoss(SegmentationLoss):
                  apply_softmax: bool = True,
                  ignore_index: int = 255,
                  epsilon: float = 1.0,
-                 alpha: float = 0.5,
-                 beta: float = 0.5,
+                 alpha: float = 0.3,
+                 beta: float = 0.7,
                  reduction: Literal["mean", "sum", "none"] = "mean",
                  weight: Optional[torch.Tensor] = None,
                  label_smoothing: float = 0.0):
@@ -68,18 +68,23 @@ class TverskyLoss(SegmentationLoss):
 
         num_classes = prediction.size(1)
         one_hot_target = self.smooth_label(target, num_classes)
-        valid_mask = (target != self.ignore_index).float()
+        valid_mask = (target != self.ignore_index).long()
 
         losses = []
         for c in range(num_classes):
             if c == self.ignore_index:
                 continue
             pred_c = prediction[:, c]
+            pred_c = pred_c.reshape(pred_c.shape[0], -1)
             target_c = one_hot_target[:, c]
-            tp = torch.sum(pred_c * target_c * valid_mask)
-            fp = torch.sum(pred_c * (1 - target_c) * valid_mask)
-            fn = torch.sum((1 - pred_c) * target_c * valid_mask)
-            tversky_index = (tp + self.epsilon) / (tp + self.alpha * fp + self.beta * fn + self.epsilon)
+            target_c = target_c.reshape(target_c.shape[0], -1)
+            valid_mask = valid_mask.reshape(valid_mask.shape[0], -1)
+
+            TP = torch.sum(torch.mul(pred_c, target_c) * valid_mask, dim=1)
+            FP = torch.sum(torch.mul(pred_c, 1 - target_c) * valid_mask, dim=1)
+            FN = torch.sum(torch.mul(1 - pred_c, target_c) * valid_mask, dim=1)
+
+            tversky_index = (TP + self.epsilon) / (TP + self.alpha * FP + self.beta * FN + self.epsilon)
             loss = 1 - tversky_index
 
             if self.weight is not None:
