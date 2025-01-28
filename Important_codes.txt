@@ -33,3 +33,5 @@ python scripts/execute_pipeline.py --steps preprocess train predict -p Q:\Power_
 (pcnn) C:\Machine_learning\pcnn>python scripts/execute_pipeline.py --steps train predict -p Q:\50Hertz\Paket_2\ML_paket_2\paket_2_pipeline.json
 
 python scripts/execute_pipeline.py --steps preprocess predict -p K:\Spie\Spie_files\Spie_ML\Spie_final_ML.json
+
+python scripts/execute_pipeline.py --steps train predict -p Q:\FruitS\ML\pomegranate\1\pipeline_config.json
