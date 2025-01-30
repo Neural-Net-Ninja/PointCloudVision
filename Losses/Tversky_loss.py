@@ -12,6 +12,20 @@ class TverskyLoss(SegmentationLoss):
     """
     Tversky loss function for imbalanced datasets.
 
+    The Tversky loss is defined as:
+
+    .. math::
+
+        \mathcal{L}_T = 1 - \frac{TP + \epsilon}{TP + \alpha \cdot FP + \beta \cdot FN + \epsilon}
+
+    where:
+    - \( TP \) (True Positives),
+    - \( FP \) (False Positives),
+    - \( FN \) (False Negatives),
+    - \( \alpha \) controls the weight of false positives (default: 0.3),
+    - \( \beta \) controls the weight of false negatives (default: 0.7),
+    - \( \epsilon \) is a smoothing factor to avoid division by zero.
+
     :param apply_softmax: Whether the predictions passed to the loss function are logits that need to be converted to
         probabilities by applying Softmax activation function. Defaults to `True`.
     :type apply_softmax: bool, optional
@@ -23,9 +37,17 @@ class TverskyLoss(SegmentationLoss):
     :type alpha: float, optional
     :param beta: Weight for false negatives. Defaults to 0.7.
     :type beta: float, optional
-    :param reduction: Specifies the reduction to apply to the output: `"mean"` | `"sum"`.
-        Defaults to `"mean"`.
+    :param reduction: Specifies the reduction to aggregate the loss values of a batch and multiple classes:
+        `"mean"` | `"sum"`. `"none"`: no reduction will be applied, `"mean"`: the mean of the output is taken, `"sum"`:
+        the output will be summed (default = `"mean"`).
     :type reduction: str, optional
+    :param weight:A manual rescaling weight given to each class. If given, has to be a Tensor of shape `(C)`, where
+        `C = number of classes`.
+    :type weight: torch.Tensor
+    :type weight: Optional[torch.Tensor], optional
+    :param label_smoothing: A float in [0.0, 1.0]. Specifies the amount of smoothing when computing the loss,
+        where 0.0 means no smoothing. Defaults to 0.
+    :type label_smoothing: float, optional
     """
 
     def __init__(self,
@@ -52,7 +74,8 @@ class TverskyLoss(SegmentationLoss):
         Computes Tversky loss.
 
         :param prediction: The prediction tensor. Must have shape :math:`(N, C)` where `N = number of points`, and
-            `C = number of classes`.
+            `C = number of classes`. If :attr:`apply_softmax` is `True`, each element is expected to be a logit value.
+            Otherwise, each element is expected to be a class probability.
         :type prediction: torch.Tensor
         :param target: The target tensor. Must have shape :math:`(N)` where each element is a class index of integer
             type (label encoding).
@@ -68,23 +91,26 @@ class TverskyLoss(SegmentationLoss):
 
         num_classes = prediction.size(1)
         one_hot_target = self.smooth_label(target, num_classes)
-        valid_mask = (target != self.ignore_index).float().unsqueeze(1)
+        valid_mask = (target != self.ignore_index).float()
 
-        prediction = prediction * valid_mask
-        one_hot_target = one_hot_target * valid_mask
+        prediction = prediction.reshape(prediction.shape[0], num_classes, -1)
+        one_hot_target = one_hot_target.reshape(one_hot_target.shape[0], num_classes, -1)
+        valid_mask = valid_mask.reshape(valid_mask.shape[0], -1)
 
-        TP = torch.sum(prediction * one_hot_target, dim=0)
-        FP = torch.sum(prediction * (1 - one_hot_target), dim=0)
-        FN = torch.sum((1 - prediction) * one_hot_target, dim=0)
+        TP = torch.sum(prediction * one_hot_target * valid_mask.unsqueeze(1), dim=2)
+        FP = torch.sum(prediction * (1 - one_hot_target) * valid_mask.unsqueeze(1), dim=2)
+        FN = torch.sum((1 - prediction) * one_hot_target * valid_mask.unsqueeze(1), dim=2)
 
         tversky_index = (TP + self.epsilon) / (TP + self.alpha * FP + self.beta * FN + self.epsilon)
         loss = 1 - tversky_index
 
         if self.weight is not None:
-            loss = loss * self.weight
+            loss = loss * self.weight.view(1, -1)
+
+        if self.ignore_index is not None:
+            loss = loss[:, :self.ignore_index]
 
         if point_weight is not None:
-            point_weight = point_weight.unsqueeze(1).expand_as(prediction)
             loss = loss * point_weight
 
         return self._reduce_loss(loss)
