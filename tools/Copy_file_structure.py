@@ -13,8 +13,8 @@ def copy_directory_structure(src_dir, dst_dir):
 
 
 # Define your directories
-src_dir = r'Q:\FruitS\2024\pomegranates'
-dst_dir = r'Q:\FruitS\ML\pomegranate\1\00_labeled_txt\02_predict'
+src_dir = r'Q:\FruitS\Fixed_temperature\pomegranates'
+dst_dir = r'C:\Machine_learning\Run_training\02_predict'
 
 # Copy directory structure
 copy_directory_structure(src_dir, dst_dir)

@@ -5,6 +5,7 @@ import shutil
 def get_file_names_without_extension(folder):
     return {os.path.splitext(file)[0] for file in os.listdir(folder)}
 
+
 def copy_unpredicted_files(source_folder, predicted_folder, destination_folder):
     # Ensure the destination folder exists
     if not os.path.exists(destination_folder):
@@ -37,9 +38,9 @@ def copy_unpredicted_files(source_folder, predicted_folder, destination_folder):
 
 
 # Define the paths to your folders
-all_files = r'K:\Spie\Spie_files\Spie_ML\01_preprocessed\paket_6_before_cut\L315'
-predicted_files = r'K:\Spie\Spie_files\Spie_ML\02_output\paket_6\L315'
-yet_to_be_predicted = r'K:\Spie\Spie_files\Spie_ML\01_preprocessed\delete'
+all_files = r'K:\Spie\00_training_data_16_04_2025\Prediction_data\pct_format\Paket_2\L_C_501'
+predicted_files = r'K:\Spie\00_training_data_16_04_2025\Final_predicted\Paket_2\L_C_501'
+yet_to_be_predicted = r'C:\Machine_learning\Run_training\02_predict\Paket_2\yet'
 
 # Count the number of files in the all_files folder
 all_files_count = len([name for name in os.listdir(all_files) if os.path.isfile(os.path.join(all_files, name))])

@@ -15,6 +15,7 @@ python -m venv C:\Machine_learning\Environments\pcnn
 Activate env :
 C:\Machine_learning\Environments\pcnn\Scripts\activate.bat
 C:\Machine_learning\Environments\Master_pcnn\Scripts\activate.bat
+C:\Machine_learning\Environments\Aladdin\Scripts\activate.ps1
 
 
 check pytorch version 
@@ -34,6 +35,18 @@ python scripts/execute_pipeline.py --steps preprocess train predict -p Q:\Power_
 
 python scripts/execute_pipeline.py --steps preprocess predict -p K:\Spie\Spie_files\Spie_ML\Spie_final_ML.json
 
-python scripts/execute_pipeline.py --steps train predict -p C:\Machine_learning\Run_training\pipeline_config.json
+python scripts/execute_pipeline.py --steps train predict -p /root/data/pipeline_config.json
 
 docker run -it --gpus all --shm-size=8gb -v C:\Machine_learning\pcnn:/root/pcnn -v C:\Machine_learning\pcnn\Run_training:/root/data justushildebrand/python-cuda:3.9-cuda11.7 /bin/bash
+
+
+python scripts/execute_pipeline.py --steps preprocess -p /root/data/pipeline_config.json
+python scripts/execute_pipeline.py --steps train predict -p /root/data/pipeline_config.json
+python scripts/execute_pipeline.py --steps preprocess train -p /root/data/pipeline_config.json
+python scripts/execute_pipeline.py --steps preprocess predict -p /root/data/pipeline_config.json
+python scripts/execute_pipeline.py --steps predict -p /root/data/pipeline_config.json
+
+docker
+
+docker start tender_wozniak 
+docker exec -it tender_wozniak /bin/bash -c "cd /root && . venv/bin/activate && cd /root/pcnn && /bin/bash"

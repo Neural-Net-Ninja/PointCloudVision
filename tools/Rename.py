@@ -2,7 +2,7 @@ import os
 import glob
 
 # Specify the directory
-directory = r"Q:\50Hertz\Paket_2\ML_paket_2\02_output\L515"
+directory = r"K:\Spie\00_training_data_16_04_2025\Final_predicted\Paket_2\L_C_501"
 
 # Get a list of all files in the directory
 files = glob.glob(os.path.join(directory, '*'))
