@@ -48,5 +48,7 @@ python scripts/execute_pipeline.py --steps predict -p /root/data/pipeline_config
 
 docker
 
-docker start tender_wozniak 
+docker start tender_wozniak
 docker exec -it tender_wozniak /bin/bash -c "cd /root && . venv/bin/activate && cd /root/pcnn && /bin/bash"
+
+docker run --volume=C:/Machine_learning/pcnn⁠:/root/pcnn --volume=C:/Machine_learning/Run_training⁠:/root/data -p 127.0.0.1:5678:5678 --restart=no -it --gpus all --shm-size=20gb -d justushildebrand/python-cuda:3.9-cuda11.8
