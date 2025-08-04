@@ -6,7 +6,7 @@ Material.primary: "Lime"
 Material.background: "black"
 Material.foreground: "lime"
 
-
+pip install -e .
 python -m pip install -e .[docs,gui]
 
 create env :
@@ -45,10 +45,32 @@ python scripts/execute_pipeline.py --steps train predict -p /root/data/pipeline_
 python scripts/execute_pipeline.py --steps preprocess train -p /root/data/pipeline_config.json
 python scripts/execute_pipeline.py --steps preprocess predict -p /root/data/pipeline_config.json
 python scripts/execute_pipeline.py --steps predict -p /root/data/pipeline_config.json
+python scripts/execute_pipeline.py --steps preprocess train predict -p /root/data/pipeline_config.json
 
 docker
 
 docker start tender_wozniak
 docker exec -it tender_wozniak /bin/bash -c "cd /root && . venv/bin/activate && cd /root/pcnn && /bin/bash"
+docker start laughing_edison
+docker exec -it laughing_edison /bin/bash -c "cd /root && . venv/bin/activate && cd /root/pcnn && /bin/bash"
+docker run --volume=C:/Machine_learning/pcnn⁠:/root/pcnn --volume=C:/Machine_learning/Run_training⁠:/root/data -p 127.0.0.1:5678:5678 --restart=no -it --gpus all --shm-size=20gb -d justushildebrand/python-cuda:3.9-cuda11.8*
 
-docker run --volume=C:/Machine_learning/pcnn⁠:/root/pcnn --volume=C:/Machine_learning/Run_training⁠:/root/data -p 127.0.0.1:5678:5678 --restart=no -it --gpus all --shm-size=20gb -d justushildebrand/python-cuda:3.9-cuda11.8
+
+
+podman run \
+  --volume=/ssd/Machine_learning/pcnn:/root/pcnn \
+  --volume=/ssd/Machine_learning/Run_training:/root/data \
+  -p 127.0.0.1:5678:5678 \
+  --restart=no \
+  -it \
+  --device=nvidia.com/gpu=all \
+  --security-opt=label=disable \
+  --shm-size=20g \
+  -d \
+  docker.io/justushildebrand/python-cuda:3.11-cuda12.8
+
+# Start the Podman container
+podman start zen_bose
+
+# Attach to the running container and open an interactive shell
+podman exec -it zen_bose /bin/bash -c "cd /root && . venv/bin/activate && cd /root/pcnn && /bin/bash"

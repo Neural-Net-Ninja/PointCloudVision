@@ -1,6 +1,7 @@
 import os
 import shutil
 
+
 def copy_directory_structure(src_dir, dst_dir):
     # Iterate over all directories and files in source directory
     for dirpath, dirnames, filenames in os.walk(src_dir):
@@ -13,8 +14,8 @@ def copy_directory_structure(src_dir, dst_dir):
 
 
 # Define your directories
-src_dir = r'K:\Spie\00_training_data_16_04_2025\Prediction_data\Paket_5\LiDAR'
-dst_dir = r'K:\Spie\00_training_data_16_04_2025\Prediction_data\pct_format\Paket_5'
+src_dir = r'Q:\FruitS\Fixed_temperature\pomegranates'
+dst_dir = r'C:\Machine_learning\Run_training\02_predict'
 
 # Copy directory structure
 copy_directory_structure(src_dir, dst_dir)
