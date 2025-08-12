@@ -279,7 +279,7 @@ def process_point_cloud_files(root_dir, attribute='AverageT'):
             # Cluster and plot per-file fruit stats
             stats_df = all_fruit_stats[-1]
             if not stats_df.empty:
-                clustered_stats, kmeans = cluster_fruit_stats(stats_df, attribute, n_clusters=4)
+                clustered_stats, kmeans = cluster_fruit_stats(stats_df, attribute, n_clusters=number_of_clusters)
                 if clustered_stats is not None:
                     create_stats_cluster_plot(clustered_stats, attribute, output_stats_plot_dir, filename_without_ext)
 
@@ -324,7 +324,7 @@ def process_point_cloud_files(root_dir, attribute='AverageT'):
         print(f"All fruit statistics saved: {stats_csv_path}")
 
         # Perform KMeans on aggregated fruit stats and plot
-        clustered_stats, kmeans = cluster_fruit_stats(all_stats_df, attribute, n_clusters=4)
+        clustered_stats, kmeans = cluster_fruit_stats(all_stats_df, attribute, n_clusters=number_of_clusters)
         if clustered_stats is not None:
             output_stats_plot_dir = os.path.join(new_root_dir, f"{attribute}_cluster_plots")
             create_stats_cluster_plot(clustered_stats, attribute, output_stats_plot_dir)
@@ -341,6 +341,7 @@ def main():
         return
 
     attribute = input("Enter the attribute for fruit stats clustering (default: AverageT): ").strip() or 'AverageT'
+    number_of_clusters = input("Enter the number of clusters for KMeans (default: 4): ").strip() or 4
 
     print(f"Processing files in: {root_directory}")
     process_point_cloud_files(root_directory, attribute)
