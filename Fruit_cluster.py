@@ -204,7 +204,7 @@ def create_stats_cluster_plot(df, attribute, output_path, filename=None):
         print(f"Error creating stats cluster plot for {filename if filename else 'aggregate stats'}: {e}")
 
 
-def process_point_cloud_files(root_dir, attribute='AverageT'):
+def process_point_cloud_files(root_dir, attribute='AverageT', number_of_clusters=4):
     """Process all point cloud files in the directory structure."""
     csv_files = find_csv_files(root_dir)
     all_fruit_stats = []  # List to store all fruit statistics DataFrames
@@ -344,7 +344,7 @@ def main():
     number_of_clusters = input("Enter the number of clusters for KMeans (default: 4): ").strip() or 4
 
     print(f"Processing files in: {root_directory}")
-    process_point_cloud_files(root_directory, attribute)
+    process_point_cloud_files(root_directory, attribute, number_of_clusters)
     print("\nProcessing complete!")
 
 
