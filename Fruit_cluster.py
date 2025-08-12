@@ -163,7 +163,48 @@ def calculate_fruit_statistics(df, output_path, filename, all_stats, k=5):
         return all_stats
 
 
-def process_point_cloud_files(root_dir):
+def cluster_fruit_stats(stats_df, attribute='AverageT', n_clusters=4):
+    """Perform KMeans clustering on fruit stats using specified attribute."""
+    if attribute not in stats_df.columns:
+        print(f"Attribute {attribute} not found in stats DataFrame.")
+        return None, None
+
+    kmeans = KMeans(n_clusters=n_clusters, init='k-means++', random_state=42)
+    stats_df['StatsClusterID'] = kmeans.fit_predict(stats_df[[attribute]])
+
+    return stats_df, kmeans
+
+
+def create_stats_cluster_plot(df, attribute, output_path, filename=None):
+    """Create and save clustering visualization for fruit stats."""
+    try:
+        plt.figure(figsize=(12, 8))
+
+        if 'StatsClusterID' not in df.columns:
+            print(f"No cluster data to plot for {filename if filename else 'aggregate stats'}")
+            return
+
+        df_sorted = df.sort_values(by=attribute)
+        plt.scatter(range(len(df_sorted)), df_sorted[attribute], c=df_sorted['StatsClusterID'], cmap='Set1', alpha=0.6)
+        plt.xlabel(f'Fruits (sorted by {attribute})')
+        plt.ylabel(attribute)
+        plt.title(f'KMeans Clusters based on {attribute}{" for " + filename if filename else ""}')
+        plt.colorbar(label='Cluster ID')
+        plt.grid(True, alpha=0.3)
+
+        os.makedirs(output_path, exist_ok=True)
+        plot_filename = f"{filename}_{attribute}_clusters.png" if filename else f"{attribute}_clusters.png"
+        plot_path = os.path.join(output_path, plot_filename)
+        plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+        plt.close()
+
+        print(f"Stats cluster plot saved: {plot_path}")
+
+    except Exception as e:
+        print(f"Error creating stats cluster plot for {filename if filename else 'aggregate stats'}: {e}")
+
+
+def process_point_cloud_files(root_dir, attribute='AverageT'):
     """Process all point cloud files in the directory structure."""
     csv_files = find_csv_files(root_dir)
     all_fruit_stats = []  # List to store all fruit statistics DataFrames
@@ -211,6 +252,7 @@ def process_point_cloud_files(root_dir):
                 output_data_dir = os.path.join(new_root_dir, rel_dir, 'per_point_clustering')
                 output_plot_dir = os.path.join(new_root_dir, rel_dir, 'plots')
                 output_stats_dir = os.path.join(new_root_dir, rel_dir, 'fruit_stats')
+                output_stats_plot_dir = os.path.join(new_root_dir, rel_dir, f'{attribute}_cluster_plots')
             else:
                 parent_dir = os.path.dirname(root_dir)
                 original_folder_name = os.path.basename(root_dir)
@@ -219,10 +261,12 @@ def process_point_cloud_files(root_dir):
                 output_data_dir = os.path.join(new_root_dir, 'per_point_clustering')
                 output_plot_dir = os.path.join(new_root_dir, 'plots')
                 output_stats_dir = os.path.join(new_root_dir, 'fruit_stats')
+                output_stats_plot_dir = os.path.join(new_root_dir, f'{attribute}_cluster_plots')
 
             os.makedirs(output_data_dir, exist_ok=True)
             os.makedirs(output_plot_dir, exist_ok=True)
             os.makedirs(output_stats_dir, exist_ok=True)
+            os.makedirs(output_stats_plot_dir, exist_ok=True)
 
             output_file = os.path.join(output_data_dir, f"{filename_without_ext}_cluster.csv")
             df_clustered.to_csv(output_file, index=False)
@@ -231,6 +275,13 @@ def process_point_cloud_files(root_dir):
             create_cluster_plot(df_clustered, output_plot_dir, filename_without_ext)
 
             all_fruit_stats = calculate_fruit_statistics(df_clustered, output_stats_dir, filename_without_ext, all_fruit_stats)
+
+            # Cluster and plot per-file fruit stats
+            stats_df = all_fruit_stats[-1]
+            if not stats_df.empty:
+                clustered_stats, kmeans = cluster_fruit_stats(stats_df, attribute, n_clusters=4)
+                if clustered_stats is not None:
+                    create_stats_cluster_plot(clustered_stats, attribute, output_stats_plot_dir, filename_without_ext)
 
             # Update summary statistics
             fruit_points = df_clustered[df_clustered['FruitID'] != 0]
@@ -272,6 +323,12 @@ def process_point_cloud_files(root_dir):
         all_stats_df.to_csv(stats_csv_path, index=False)
         print(f"All fruit statistics saved: {stats_csv_path}")
 
+        # Perform KMeans on aggregated fruit stats and plot
+        clustered_stats, kmeans = cluster_fruit_stats(all_stats_df, attribute, n_clusters=4)
+        if clustered_stats is not None:
+            output_stats_plot_dir = os.path.join(new_root_dir, f"{attribute}_cluster_plots")
+            create_stats_cluster_plot(clustered_stats, attribute, output_stats_plot_dir)
+
 
 def main():
     root_directory = input("Enter the root directory path (or press Enter for current directory): ").strip()
@@ -283,8 +340,10 @@ def main():
         print(f"Directory {root_directory} does not exist!")
         return
 
+    attribute = input("Enter the attribute for fruit stats clustering (default: AverageT): ").strip() or 'AverageT'
+
     print(f"Processing files in: {root_directory}")
-    process_point_cloud_files(root_directory)
+    process_point_cloud_files(root_directory, attribute)
     print("\nProcessing complete!")
 
 
