@@ -100,8 +100,8 @@ def calculate_fruit_statistics(df, output_path, filename, all_stats, k=5):
         stats = fruit_data.groupby('FruitID').agg({
             'Temperature': [
                 'max', 'min', 'mean', 'median', ('count', 'count'),
-                ('Min80T', lambda x: np.percentile(x, 10)),  # 10th percentile
-                ('Max80T', lambda x: np.percentile(x, 90))   # 90th percentile
+                ('Min80T', lambda x: np.percentile(x, 20)),  # 20th percentile
+                ('Max80T', lambda x: np.percentile(x, 80))   # 80th percentile
             ],
             'X': 'mean',  # For centroid
             'Y': 'mean',  # For centroid
