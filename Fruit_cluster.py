@@ -100,8 +100,8 @@ def calculate_fruit_statistics(df, output_path, filename, all_stats, k=5):
         stats = fruit_data.groupby('FruitID').agg({
             'Temperature': [
                 'max', 'min', 'mean', 'median', ('count', 'count'),
-                ('Min80T', lambda x: np.percentile(x, 10)),  # 10th percentile
-                ('Max80T', lambda x: np.percentile(x, 90))   # 90th percentile
+                ('Min80T', lambda x: np.percentile(x, 20)),  # 20th percentile
+                ('Max80T', lambda x: np.percentile(x, 80))   # 80th percentile
             ],
             'X': 'mean',  # For centroid
             'Y': 'mean',  # For centroid
@@ -340,7 +340,10 @@ def main():
         print(f"Directory {root_directory} does not exist!")
         return
 
-    attribute = input("Enter the attribute for fruit stats clustering (default: AverageT): ").strip() or 'AverageT'
+    attribute = input(
+        "Enter the attribute for fruit stats clustering "
+        "(options: MaxT, MinT, AverageT, MedianT, Min80T, Max80T, knn-TempDiff; default: AverageT): "
+    ).strip() or 'AverageT'
     number_of_clusters = input("Enter the number of clusters for KMeans (default: 4): ").strip() or 4
 
     print(f"Processing files in: {root_directory}")
